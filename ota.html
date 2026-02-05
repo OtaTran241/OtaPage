@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Chồng xin lỗi bé chen 💗</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --txt:#eef0ff;
+      --muted:#aab2ffcc;
+      --accent:#ff5ea8;
+      --accent2:#7c5cff;
+      --shadow: 0 16px 50px rgba(0,0,0,.35);
+      --radius: 22px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background:
+        radial-gradient(1200px 700px at 15% 10%, rgba(124,92,255,.28), transparent 60%),
+        radial-gradient(1000px 700px at 85% 30%, rgba(255,94,168,.25), transparent 55%),
+        var(--bg);
+      color:var(--txt);
+      overflow:hidden;
+      touch-action: manipulation;
+    }
+
+    canvas#fx, canvas#bg{
+      position:fixed; inset:0;
+      pointer-events:none;
+    }
+    canvas#bg{ z-index: 1; opacity:.85; }
+    canvas#fx{ z-index: 10; }
+
+    .wrap{
+      max-width: 920px;
+      margin: 0 auto;
+      padding: calc(18px + env(safe-area-inset-top)) 14px calc(28px + env(safe-area-inset-bottom));
+      position:relative;
+      z-index: 20;
+    }
+    .card{
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      position:relative;
+      overflow:hidden;
+      backdrop-filter: blur(10px);
+    }
+    .top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    h1{ margin:0 0 6px; font-size: 20px; letter-spacing:.2px;}
+    p{ margin: 0; color: var(--muted); line-height:1.6; }
+
+    .btnrow{
+      display:flex; gap:8px; flex-wrap:wrap;
+      justify-content:flex-end;
+      margin-left:auto;
+    }
+    .chip{
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.08);
+      color: var(--txt);
+      border-radius: 999px;
+      padding: 9px 12px;
+      font-weight: 850;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .chip.primary{
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: 0;
+    }
+
+    .hero{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      margin-top: 12px;
+    }
+    .avt{
+      width:60px; height:60px; border-radius:18px;
+      background: linear-gradient(135deg, rgba(255,94,168,.9), rgba(124,92,255,.9));
+      display:grid; place-items:center;
+      font-size:28px;
+      box-shadow: 0 18px 44px rgba(124,92,255,.22);
+      flex:0 0 auto;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      position:relative;
+      overflow:hidden;
+    }
+    .avt::after{
+      content:"";
+      position:absolute; inset:-35%;
+      background: radial-gradient(circle, rgba(255,255,255,.28), transparent 55%);
+      transform: rotate(18deg);
+    }
+
+    .msg{
+      flex:1;
+      padding: 12px 12px;
+      border-radius: 18px;
+      background: rgba(0,0,0,.18);
+      border: 1px dashed rgba(255,255,255,.16);
+      min-height: 110px;
+      white-space: pre-wrap;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .arena{
+      position:relative;
+      height: 270px;
+      margin-top: 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      overflow:hidden;
+      touch-action: none; /* cho swipe vệt */
+    }
+
+    button.action{
+      position:absolute;
+      border:0;
+      border-radius: 999px;
+      padding: 13px 16px;
+      font-weight: 900;
+      cursor:pointer;
+      color: var(--txt);
+      background: rgba(255,255,255,.10);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.18);
+      transition: transform .08s ease, left .12s ease, top .12s ease;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      font-size: 15px;
+      max-width: calc(100% - 16px);
+      white-space:nowrap;
+    }
+    button.action:active{ transform: scale(.98); }
+
+    #yes{
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+    }
+    #no{
+      background: rgba(255,94,168,.18);
+      border: 1px solid rgba(255,94,168,.25);
+    }
+
+    .trail{
+      position:absolute;
+      font-size: 18px;
+      pointer-events:none;
+      transform: translate(-50%,-50%);
+      animation: fadeUp .65s ease-out forwards;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,.25));
+    }
+    @keyframes fadeUp{
+      to{ opacity:0; transform: translate(-50%,-50%) translateY(-18px) scale(.95); }
+    }
+
+    /* emoji pop (duck etc.) */
+    .pop{
+      position:fixed;
+      left:0; top:0;
+      transform: translate(-50%,-50%);
+      font-size: 34px;
+      pointer-events:none;
+      z-index: 30;
+      filter: drop-shadow(0 18px 22px rgba(0,0,0,.30));
+      will-change: transform, opacity;
+    }
+
+    @media (max-width: 520px){
+      .msg{ font-size: 15px; }
+      button.action{ padding: 12px 14px; font-size: 14px; }
+      .arena{ height: 290px; }
+      .pop{ font-size: 30px; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="bg"></canvas>
+  <canvas id="fx"></canvas>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="top">
+        <div>
+          <h1>Chồng xin lỗi bé chen 💗</h1>
+          <p id="subtitle">Chồng sai rồi… bé chen đừng giận nữa nha 🥺</p>
+        </div>
+        <div class="btnrow">
+          <button class="chip" id="btnSound" type="button">🔊</button>
+          <button class="chip" id="btnMode" type="button">❤️ Nịnh :3</button>
+          <button class="chip primary" id="btnTask" type="button">🧋 Bù đắp</button>
+          <button class="chip" id="btnReset" type="button">↩️ Reset</button>
+        </div>
+      </div>
+
+      <div class="hero">
+        <div class="avt" id="avt" title="bấm bấm thử coi">🐾</div>
+        <div class="msg" id="msg"></div>
+      </div>
+
+      <div class="arena" id="arena">
+        <button class="action" id="yes" type="button">✅ Tha thứ cho chồng</button>
+        <button class="action" id="no" type="button">😤 Không tha thứ</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // ---------- utils ----------
+  const $ = (s) => document.querySelector(s);
+  const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+  const rand = (a,b) => Math.random()*(b-a)+a;
+
+  // ---------- sound ----------
+  let soundOn = (localStorage.getItem("ota_sound") ?? "on") === "on";
+  $("#btnSound").textContent = soundOn ? "🔊" : "🔇";
+  let audioCtx = null;
+  function beep(freq=660, dur=0.05, type="sine", vol=0.035){
+    if(!soundOn) return;
+    try{
+      if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = type; o.frequency.value = freq;
+      g.gain.value = vol;
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime + dur);
+    }catch(e){}
+  }
+  $("#btnSound").addEventListener("click", ()=>{
+    soundOn = !soundOn;
+    localStorage.setItem("ota_sound", soundOn ? "on":"off");
+    $("#btnSound").textContent = soundOn ? "🔊" : "🔇";
+    beep(soundOn ? 880 : 220, 0.07, "triangle", 0.05);
+  }, {passive:true});
+
+  // ---------- message modes ----------
+  const subtitle = $("#subtitle");
+  const msg = $("#msg");
+  const modes = [
+    {
+      sub: "Chồng sai rồi… bé chen đừng giận nữa nha 🥺",
+      lines: [
+        "Bé chen ơi…",
+        "Chồng xin lỗi bé chen thật nhiều 🥺",
+        "Chồng biết chồng làm bé chen buồn…",
+        "Chồng không cãi, chỉ muốn sửa.",
+        "Bé chen cho chồng cơ hội bù đắp nha 💗"
+      ]
+    },
+    {
+      sub: "Bé chen giận là chồng… rén lắm đó 😳",
+      lines: [
+        "Bé chen ơi…",
+        "Chồng xin lỗi (xin lỗi thiệt, không phải xin lỗi cho có 😤)",
+        "Từ nay bé chen nói 1, chồng làm 1.1!",
+        "Bé chen cười cái là chồng sống lại liền 🥹",
+        "Tha thứ nhaaa 💗"
+      ]
+    },
+    {
+      sub: "Bé chen là cả bầu trời của chồng 💗",
+      lines: [
+        "Bé chen ơi…",
+        "Chồng xin lỗi bé chen thật nhiều.",
+        "Không có bé chen là chồng… lạc đường luôn 🥺",
+        "Chồng chỉ muốn bé chen yên tâm và được yêu thương.",
+        "Cho chồng cơ hội bù đắp nha 💗"
+      ]
+    }
+  ];
+  let modeIdx = Number(localStorage.getItem("ota_mode_idx") || 0);
+  modeIdx = clamp(modeIdx, 0, modes.length-1);
+
+  let typingTimer = null;
+  function typewrite(lines){
+    clearTimeout(typingTimer);
+    let tl = 0, tc = 0;
+    msg.textContent = "";
+    const tick = () => {
+      if(tl >= lines.length) return;
+      const cur = lines[tl];
+      msg.textContent =
+        lines.slice(0, tl).join("\n") +
+        (tl ? "\n" : "") +
+        cur.slice(0, tc);
+      tc++;
+      if(tc > cur.length){
+        tl++; tc = 0;
+        msg.textContent += "\n";
+        typingTimer = setTimeout(tick, 220);
+      }else{
+        if(tc % 2 === 0) beep(520, 0.018, "square", 0.014);
+        typingTimer = setTimeout(tick, 18);
+      }
+    };
+    tick();
+  }
+
+  function applyMode(){
+    subtitle.textContent = modes[modeIdx].sub;
+    localStorage.setItem("ota_mode_idx", String(modeIdx));
+    typewrite(modes[modeIdx].lines);
+  }
+  applyMode();
+
+  $("#btnMode").addEventListener("click", ()=>{
+    modeIdx = (modeIdx + 1) % modes.length;
+    beep(740, 0.06, "triangle", 0.05);
+    applyMode();
+  }, {passive:true});
+
+  // ---------- background floating hearts ----------
+  const bg = $("#bg");
+  const bgx = bg.getContext("2d");
+  const bgHearts = [];
+  function resizeBg(){
+    bg.width = innerWidth * devicePixelRatio;
+    bg.height = innerHeight * devicePixelRatio;
+    bgx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  }
+  addEventListener("resize", resizeBg);
+  resizeBg();
+
+  function spawnBgHeart(){
+    bgHearts.push({
+      x: rand(0, innerWidth),
+      y: innerHeight + rand(0, 60),
+      vy: rand(0.25, 0.85),
+      a: rand(0.25, 0.75),
+      s: rand(10, 18),
+      t: rand(0, Math.PI*2)
+    });
+    if(bgHearts.length > 70) bgHearts.shift();
+  }
+  setInterval(spawnBgHeart, 260);
+
+  function tickBg(){
+    bgx.clearRect(0,0,innerWidth,innerHeight);
+    for(let i=bgHearts.length-1;i>=0;i--){
+      const p = bgHearts[i];
+      p.y -= p.vy;
+      p.t += 0.02;
+      const sway = Math.sin(p.t) * 8;
+      bgx.globalAlpha = p.a * 0.55;
+      bgx.font = `${p.s}px system-ui`;
+      bgx.fillText("💗", p.x + sway, p.y);
+      if(p.y < -40) bgHearts.splice(i,1);
+    }
+    requestAnimationFrame(tickBg);
+  }
+  tickBg();
+
+  // ---------- fireworks / confetti ----------
+  const fx = $("#fx");
+  const ctx = fx.getContext("2d");
+  const parts = [];
+
+  function resizeFx(){
+    fx.width = innerWidth * devicePixelRatio;
+    fx.height = innerHeight * devicePixelRatio;
+    ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  }
+  addEventListener("resize", resizeFx);
+  resizeFx();
+
+  function burst(x, y, n=120){
+    for(let i=0;i<n;i++){
+      const a = Math.random() * Math.PI * 2;
+      const sp = 2 + Math.random() * 7;
+      parts.push({
+        x, y,
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp - (1 + Math.random()*2),
+        g: 0.12 + Math.random()*0.12,
+        life: 55 + Math.random()*55,
+        s: 2 + Math.random()*3,
+        rot: Math.random()*Math.PI,
+        vr: (-0.2 + Math.random()*0.4),
+        hue: Math.floor(Math.random()*360)
+      });
+    }
+    beep(988, 0.06, "triangle", 0.05);
+  }
+
+  function heartRain(x, y){
+    burst(x, y, 70);
+    for(let i=0;i<18;i++){
+      parts.push({
+        x: x + rand(-30,30),
+        y: y + rand(-10,10),
+        vx: rand(-1.5, 1.5),
+        vy: rand(-4.5, -1.2),
+        g: rand(0.08, 0.14),
+        life: rand(55, 95),
+        s: rand(10, 18),
+        emoji: Math.random()<0.5 ? "💖" : "💗"
+      });
+    }
+  }
+
+  function tickFx(){
+    ctx.clearRect(0,0,innerWidth,innerHeight);
+    for(let i=parts.length-1;i>=0;i--){
+      const p = parts[i];
+      p.vy += p.g;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot = (p.rot || 0) + (p.vr || 0);
+      p.life -= 1;
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      if(p.emoji){
+        ctx.globalAlpha = 0.95;
+        ctx.font = `${p.s}px system-ui`;
+        ctx.fillText(p.emoji, -p.s/2, p.s/2);
+      }else{
+        ctx.rotate(p.rot);
+        ctx.globalAlpha = 0.95;
+        ctx.fillStyle = `hsla(${p.hue}, 92%, 65%, .95)`;
+        ctx.fillRect(-p.s*2, -p.s, p.s*4, p.s*2);
+      }
+      ctx.restore();
+
+      if(p.life <= 0 || p.y > innerHeight + 80) parts.splice(i,1);
+    }
+    requestAnimationFrame(tickFx);
+  }
+  tickFx();
+
+  // ---------- duck / emoji pop (click -> xuất hiện con vịt nhảy) ----------
+  const pops = [];
+  const popEmojis = ["🦆","🐥","🐤","🐱","🐶","🐸","🦊","🐼"];
+  function spawnPop(x, y){
+    const el = document.createElement("div");
+    el.className = "pop";
+    el.textContent = Math.random() < 0.55 ? "🦆" : popEmojis[(Math.random()*popEmojis.length)|0];
+    document.body.appendChild(el);
+
+    const p = {
+      el,
+      x, y,
+      vx: rand(-2.2, 2.2),
+      vy: rand(-7.0, -4.0),
+      g: rand(0.18, 0.24),
+      life: rand(55, 85),
+      rot: rand(-10,10),
+      vr: rand(-0.6,0.6),
+      scale: rand(0.95, 1.15),
+      opacity: 1
+    };
+    pops.push(p);
+    // nhẹ: “quack” bằng beep
+    beep(320 + rand(-40,40), 0.05, "square", 0.02);
+  }
+
+  function tickPop(){
+    for(let i=pops.length-1;i>=0;i--){
+      const p = pops[i];
+      p.vy += p.g;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vr;
+      p.life -= 1;
+
+      // bounce on bottom
+      const floor = innerHeight - 24;
+      if(p.y > floor){
+        p.y = floor;
+        p.vy *= -0.55;
+        p.vx *= 0.92;
+      }
+
+      // fade out near end
+      if(p.life < 18) p.opacity = p.life / 18;
+
+      p.el.style.left = p.x + "px";
+      p.el.style.top  = p.y + "px";
+      p.el.style.opacity = p.opacity;
+      p.el.style.transform =
+        `translate(-50%,-50%) rotate(${p.rot}deg) scale(${p.scale})`;
+
+      if(p.life <= 0){
+        p.el.remove();
+        pops.splice(i,1);
+      }
+    }
+    requestAnimationFrame(tickPop);
+  }
+  tickPop();
+
+  // ---------- arena buttons (mobile-friendly) ----------
+  const arena = $("#arena");
+  const yes = $("#yes");
+  const no  = $("#no");
+
+  function arenaRect(){ return arena.getBoundingClientRect(); }
+  function setPos(el, x, y){
+    const r = arenaRect();
+    const bw = el.offsetWidth;
+    const bh = el.offsetHeight;
+    el.style.left = clamp(x, 8, r.width - bw - 8) + "px";
+    el.style.top  = clamp(y, 8, r.height - bh - 10) + "px";
+  }
+  function initPos(){
+    const r = arenaRect();
+    setPos(yes, r.width*0.12, r.height*0.62);
+    setPos(no,  r.width*0.56, r.height*0.62);
+  }
+  requestAnimationFrame(initPos);
+
+  // Track pointer
+  let pointer = {x: innerWidth/2, y: innerHeight/2, down:false};
+  addEventListener("pointermove", (e)=>{ pointer.x = e.clientX; pointer.y = e.clientY; }, {passive:true});
+  addEventListener("pointerdown", (e)=>{ pointer.down = true; pointer.x = e.clientX; pointer.y = e.clientY; }, {passive:true});
+  addEventListener("pointerup",   ()=>{ pointer.down = false; }, {passive:true});
+
+  // NO evasion
+  let noEnergy = 0;
+  function dodgeNo(){
+    const r = arenaRect();
+    const nb = no.getBoundingClientRect();
+    const inside = pointer.x>=r.left && pointer.x<=r.right && pointer.y>=r.top && pointer.y<=r.bottom;
+    if(!inside){ noEnergy *= 0.98; requestAnimationFrame(dodgeNo); return; }
+
+    const x = pointer.x - r.left;
+    const y = pointer.y - r.top;
+
+    const cx = (nb.left - r.left) + nb.width/2;
+    const cy = (nb.top  - r.top)  + nb.height/2;
+
+    let dx = cx - x;
+    let dy = cy - y;
+    const dist = Math.hypot(dx,dy) || 1;
+
+    const R = pointer.down ? 200 : 170;
+    const near = Math.max(0, R - dist);
+
+    if(near > 0){
+      dx /= dist; dy /= dist;
+      noEnergy = clamp(noEnergy + near*0.014, 0, 24);
+
+      const step = 9 + near*0.085 + noEnergy;
+      const jitter = pointer.down ? 16 : 10;
+
+      const nx = (nb.left - r.left) + dx*step + (Math.random()-0.5)*jitter;
+      const ny = (nb.top  - r.top) + dy*step + (Math.random()-0.5)*jitter;
+      setPos(no, nx, ny);
+    }else{
+      noEnergy *= 0.985;
+    }
+    requestAnimationFrame(dodgeNo);
+  }
+  requestAnimationFrame(dodgeNo);
+
+  // NO click => teleport + đổi chữ
+  const tease = ["😤 Không!", "😤 Hừm… không!", "😤 Bé chen giận!", "😤 Khônggg!", "😤 Chồng tự xử!"];
+  let teaseI = 0;
+  no.addEventListener("click", (e) => {
+    e.preventDefault();
+    teaseI = (teaseI + 1) % tease.length;
+    no.textContent = tease[teaseI];
+    noEnergy = clamp(noEnergy + 7, 0, 24);
+
+    const r = arenaRect();
+    setPos(no, rand(8, r.width - no.offsetWidth - 8), rand(8, r.height - no.offsetHeight - 10));
+    burst(e.clientX, e.clientY, 60);
+    spawnPop(e.clientX, e.clientY);
+  }, {passive:false});
+
+  // YES magnet (offset) + click wins
+  function magnetYes(){
+    const r = arenaRect();
+    const yb = yes.getBoundingClientRect();
+    const inside = pointer.x>=r.left && pointer.x<=r.right && pointer.y>=r.top && pointer.y<=r.bottom;
+    if(!inside){ requestAnimationFrame(magnetYes); return; }
+
+    const mx = pointer.x - r.left;
+    const my = pointer.y - r.top;
+
+    const curX = (yb.left - r.left);
+    const curY = (yb.top  - r.top);
+
+    const off = pointer.down ? 34 : 22;  // lệch để không bị ngón che
+    const targetX = mx - yb.width/2 + off;
+    const targetY = my - yb.height/2 + off;
+
+    const pull = pointer.down ? 0.14 : 0.10;
+    setPos(yes, curX + (targetX-curX)*pull, curY + (targetY-curY)*pull);
+    requestAnimationFrame(magnetYes);
+  }
+  requestAnimationFrame(magnetYes);
+
+  yes.addEventListener("click", (e) => {
+    burst(e.clientX, e.clientY, 220);
+    heartRain(e.clientX, e.clientY);
+    spawnPop(e.clientX, e.clientY);
+
+    msg.textContent =
+      "Bé chen tha thứ rồi hả… 🥹💗\n" +
+      "Chồng cảm ơn bé chen nhiều lắm.\n" +
+      "Chồng hứa sẽ ngoan, biết điều, và lắng nghe bé chen hơn.\n\n" +
+      "Bé chen cho chồng một cái ôm nha?";
+    yes.textContent = "💗 Bé chen dễ thương nhất";
+    no.textContent = "🥺 được rồi… tha thứ đi";
+    no.style.opacity = "0.65";
+  }, {passive:true});
+
+  // ---------- swipe trail hearts inside arena ----------
+  let lastTrail = 0;
+  function addTrail(x, y){
+    const r = arenaRect();
+    const px = x - r.left;
+    const py = y - r.top;
+    const el = document.createElement("div");
+    el.className = "trail";
+    el.textContent = Math.random()<0.5 ? "💗" : "💖";
+    el.style.left = px + "px";
+    el.style.top = py + "px";
+    arena.appendChild(el);
+    setTimeout(()=>el.remove(), 700);
+  }
+  arena.addEventListener("pointermove", (e) => {
+    const t = performance.now();
+    if(t - lastTrail < 45) return;
+    lastTrail = t;
+    if(e.buttons === 0 && !pointer.down) return;
+    addTrail(e.clientX, e.clientY);
+  }, {passive:true});
+
+  // ---------- gestures: double tap & long press ----------
+  let lastTap = 0;
+  let longPressT = null;
+  let longPressBurst = null;
+
+  function startLongPress(x,y){
+    longPressT = setTimeout(() => {
+      longPressBurst = setInterval(()=>{
+        burst(x,y,70);
+        spawnPop(x + rand(-20,20), y + rand(-20,20));
+      }, 180);
+    }, 420);
+  }
+  function stopLongPress(){
+    clearTimeout(longPressT); longPressT = null;
+    if(longPressBurst){ clearInterval(longPressBurst); longPressBurst = null; }
+  }
+
+  document.addEventListener("pointerdown", (e) => {
+    // click anywhere: pháo hoa + vịt
+    burst(e.clientX, e.clientY, 90);
+    spawnPop(e.clientX, e.clientY);
+
+    const t = performance.now();
+    const dt = t - lastTap;
+    if(dt < 260){
+      heartRain(e.clientX, e.clientY);
+      lastTap = 0;
+    }else{
+      lastTap = t;
+      startLongPress(e.clientX, e.clientY);
+    }
+  }, {passive:true});
+  document.addEventListener("pointerup", stopLongPress, {passive:true});
+  document.addEventListener("pointercancel", stopLongPress, {passive:true});
+  document.addEventListener("pointermove", () => { if(longPressT) stopLongPress(); }, {passive:true});
+
+  // ---------- fun tasks (no toast, just small change in subtitle) ----------
+  const tasks = [
+    "🧋 Trà sữa + ôm 10 giây",
+    "🍜 Dắt bé chen đi ăn món bé thích",
+    "💆 Massage vai gáy 15 phút",
+    "🎬 Xem phim bé chen chọn",
+    "🧽 Chồng rửa chén/giặt đồ không than",
+    "🧸 Xoa đầu + hứa ngoan",
+    "📌 Viết 3 điều chồng sẽ sửa và làm liền",
+    "🌙 Nhắn ‘bé chen ngủ ngon’ siêu sến"
+  ];
+  $("#btnTask").addEventListener("click", ()=>{
+    const pick = tasks[(Math.random()*tasks.length)|0];
+    subtitle.textContent = "Bù đắp: " + pick + " 💗";
+    burst(innerWidth*0.5, 140, 140);
+    spawnPop(innerWidth*0.5, 140);
+  }, {passive:true});
+
+  // ---------- avatar easter egg (tap 5 times) ----------
+  let avtTap = 0;
+  $("#avt").addEventListener("click", ()=>{
+    avtTap++;
+    beep(660 + avtTap*30, 0.04, "triangle", 0.04);
+    if(avtTap >= 5){
+      avtTap = 0;
+      subtitle.textContent = "Boss mode: bé chen là boss, chồng là đệ 🫡💗";
+      heartRain(innerWidth/2, 160);
+      burst(innerWidth/2, 160, 220);
+      spawnPop(innerWidth/2, 160);
+      msg.textContent =
+        "Bé chen ơi…\n" +
+        "Chồng xin lỗi nha 🥺\n\n" +
+        "Bé chen là boss.\n" +
+        "Chồng là đệ.\n" +
+        "Boss nói gì, đệ làm đó 🫡💗";
+    }
+  }, {passive:true});
+
+  // ---------- Reset ----------
+  $("#btnReset").addEventListener("click", () => {
+    subtitle.textContent = "Chồng sai rồi… bé chen đừng giận nữa nha 🥺";
+    no.textContent = "😤 Không tha thứ";
+    no.style.opacity = "1";
+    yes.textContent = "✅ Tha thứ cho chồng";
+    modeIdx = 0; localStorage.setItem("ota_mode_idx", "0");
+    applyMode();
+    initPos();
+    burst(innerWidth/2, innerHeight/2, 160);
+    spawnPop(innerWidth/2, innerHeight/2);
+  }, {passive:true});
+
+})();
+</script>
+</body>
+</html>
