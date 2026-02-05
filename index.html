@@ -1,329 +1,252 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Heart Particle + Text Ring (1 file)</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bói tương lai 😼</title>
+
   <style>
-    html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:system-ui}
-    #ui{
-      position:fixed; inset:12px 12px auto 12px; display:flex; gap:10px; flex-wrap:wrap;
-      z-index:10; align-items:center; justify-content:space-between;
+    :root{
+      --bg1:#ffe4f1;
+      --bg2:#ffb6d5;
+      --card:#ffffffcc;
+      --text:#222;
+      --btn:#111;
+      --btn2:#ff2f7f;
+    }
+
+    *{box-sizing:border-box;}
+
+    body{
+      margin:0;
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      background:
+        radial-gradient(circle at 20% 10%, var(--bg1), transparent 55%),
+        radial-gradient(circle at 80% 30%, #ffd0e4, transparent 50%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      overflow:hidden;
+    }
+
+    .card{
+      width:min(760px, 92vw);
+      padding:28px 22px 22px;
+      border-radius:24px;
+      background: var(--card);
+      box-shadow: 0 18px 60px rgba(0,0,0,.12);
+      border: 1px solid rgba(255,255,255,.65);
+      backdrop-filter: blur(10px);
+      text-align:center;
+      position:relative;
+    }
+
+    h1{
+      margin:0 0 10px;
+      font-size: clamp(22px, 3.2vw, 34px);
+      font-weight: 900;
+      letter-spacing: .2px;
+    }
+
+    p{
+      margin: 0 0 18px;
+      font-size: clamp(14px, 2vw, 18px);
+      opacity:.85;
+      line-height:1.4;
+    }
+
+    .gif{
+      width: min(240px, 55vw);
+      display:block;
+      margin: 10px auto 18px;
+      border-radius:18px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.12);
+      border: 1px solid rgba(255,255,255,.8);
+    }
+
+    .buttons{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      gap:12px;
+      margin-top: 8px;
+    }
+
+    button{
+      border:none;
+      cursor:pointer;
+      font-weight:900;
+      font-size:15px;
+      padding: 14px 18px;
+      border-radius: 999px;
+      transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+      will-change: transform;
+    }
+
+    .btn-main{
+      background: linear-gradient(180deg, var(--btn2), #ff4d8d);
+      color:white;
+      box-shadow: 0 12px 30px rgba(255, 77, 141, .35);
+    }
+
+    .btn-main:hover{ transform: translateY(-2px) scale(1.02); }
+    .btn-main:active{ transform: translateY(0) scale(.99); }
+
+    .btn-alt{
+      background: #111;
+      color:#fff;
+      box-shadow: 0 12px 30px rgba(0,0,0,.18);
+    }
+
+    .btn-alt:hover{ transform: translateY(-2px) scale(1.02); }
+    .btn-alt:active{ transform: translateY(0) scale(.99); }
+
+    .fortune{
+      margin: 16px auto 0;
+      width: min(560px, 92%);
+      padding: 14px 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.75);
+      border: 1px solid rgba(255,255,255,.85);
+      box-shadow: 0 10px 22px rgba(0,0,0,.06);
+      font-size: 16px;
+      font-weight: 800;
+      line-height: 1.4;
+      display:none;
+    }
+
+    .fortune.show{ display:block; }
+
+    .bar{
+      margin: 14px auto 0;
+      width:min(420px, 86%);
+      height: 12px;
+      background: rgba(0,0,0,.08);
+      border-radius: 999px;
+      overflow:hidden;
+      position:relative;
+      display:none;
+    }
+
+    .bar.show{ display:block; }
+
+    .bar > div{
+      height:100%;
+      width: 30%;
+      background: rgba(0,0,0,.22);
+      border-radius: 999px;
+      animation: loading 1.05s ease-in-out infinite;
+    }
+
+    @keyframes loading{
+      0%{ transform: translateX(-120%); }
+      100%{ transform: translateX(340%); }
+    }
+
+    .small{
+      margin-top: 10px;
+      font-size: 12px;
+      opacity: .65;
+    }
+
+    a{ color: #111; }
+
+    .sparkle{
+      position:absolute;
+      inset:-120px;
+      background-image:
+        radial-gradient(circle at 15% 30%, rgba(255,255,255,.35) 0 2px, transparent 3px),
+        radial-gradient(circle at 75% 20%, rgba(255,255,255,.25) 0 2px, transparent 3px),
+        radial-gradient(circle at 30% 70%, rgba(255,255,255,.22) 0 2px, transparent 3px),
+        radial-gradient(circle at 85% 80%, rgba(255,255,255,.18) 0 2px, transparent 3px);
+      filter: blur(.2px);
+      opacity:.7;
       pointer-events:none;
+      animation: floaty 6s ease-in-out infinite;
+      border-radius: 24px;
     }
-    .pill{
-      pointer-events:auto;
-      color:#fff; font-size:12px; opacity:.9;
-      padding:8px 10px; border-radius:999px;
-      background:rgba(255,255,255,.07);
-      border:1px solid rgba(255,255,255,.14);
-      backdrop-filter: blur(6px);
-      display:flex; gap:8px; align-items:center;
+
+    @keyframes floaty{
+      0%,100%{ transform: translateY(0); }
+      50%{ transform: translateY(12px); }
     }
-    button,input{
-      pointer-events:auto;
-      border:1px solid rgba(255,255,255,.18);
-      background:rgba(255,255,255,.08);
-      color:#fff; padding:7px 10px; border-radius:12px;
-      font-weight:700; cursor:pointer; font-size:12px;
-    }
-    button:hover{ background:rgba(255,255,255,.12); }
-    input{ font-weight:600; width:min(260px, 60vw); }
-    #hint{
-      position:fixed; bottom:12px; left:12px; right:12px;
-      text-align:center; color:#fff; font-size:12px; opacity:.75;
-      z-index:10; pointer-events:none;
-    }
-    canvas{display:block}
   </style>
 </head>
-<body>
-  <div id="ui">
-    <div class="pill">
-      ✨ Kéo/chuột để xoay • Lăn để zoom
-    </div>
-    <div class="pill">
-      <span>Text:</span>
-      <input id="text" value="Em yêu chồng 💖 | Cảm ơn anh 🫶 | Chồng yêu 😳 | Bruh 🤦" />
-      <button id="apply">Apply</button>
-    </div>
-  </div>
-  <div id="hint">Tip: mobile kéo 1 ngón để xoay • 2 ngón để zoom</div>
 
-  <!-- Three.js (CDN) -->
-  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
-  <script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+<body>
+  <main class="card">
+    <div class="sparkle"></div>
+
+    <h1>🔮 BÓI TƯƠNG LAI 🔮</h1>
+    <p>
+      Ở đây có thể thấy tương lai của bạn… nhưng chỉ người đủ <b>đáng yêu</b> mới xem được 😼
+    </p>
+
+    <img class="gif" src="https://voz.vn/attachments/undefined-imgur-1-gif.1539187/" alt="cat" />
+
+    <div class="buttons" id="buttons">
+      <button class="btn-main" id="btnFuture">Bấm nút này để thấy tương lai của bạn ✨</button>
+      <button class="btn-alt" id="btnHusband" style="display:none;">Bạn muốn biết chồng mình là ai không? 😳</button>
+    </div>
+
+    <div class="fortune" id="fortune"></div>
+    <div class="bar" id="bar"><div></div></div>
+  </main>
 
   <script>
-    // --- Scene setup ---
-    const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false });
-    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
-    renderer.setSize(innerWidth, innerHeight);
-    renderer.setClearColor(0x000000, 1);
-    document.body.appendChild(renderer.domElement);
+    const FB_LINK = "https://www.facebook.com/ducthuan224/";
 
-    const scene = new THREE.Scene();
+    const btnFuture  = document.getElementById('btnFuture');
+    const buttons   = document.getElementById('buttons');
+    const btnHusband = document.getElementById('btnHusband');
+    const fortune    = document.getElementById('fortune');
+    const bar        = document.getElementById('bar');
 
-    const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 4000);
-    camera.position.set(0, 60, 240);
+    let step = 0;
 
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.06;
-    controls.rotateSpeed = 0.35;
-    controls.zoomSpeed = 0.75;
-    controls.minDistance = 110;
-    controls.maxDistance = 520;
-
-    // --- Starfield ---
-    function makeStars(count=1500){
-      const g = new THREE.BufferGeometry();
-      const p = new Float32Array(count*3);
-      for(let i=0;i<count;i++){
-        const r = 1200*Math.pow(Math.random(), 0.55);
-        const th = Math.random()*Math.PI*2;
-        const ph = Math.acos(2*Math.random()-1);
-        p[i*3+0] = r*Math.sin(ph)*Math.cos(th);
-        p[i*3+1] = r*Math.cos(ph);
-        p[i*3+2] = r*Math.sin(ph)*Math.sin(th);
-      }
-      g.setAttribute('position', new THREE.BufferAttribute(p,3));
-      const m = new THREE.PointsMaterial({ size: 1.2, sizeAttenuation:true, color:0xffffff, transparent:true, opacity:0.85 });
-      const pts = new THREE.Points(g,m);
-      return pts;
-    }
-    const stars = makeStars(2200);
-    scene.add(stars);
-
-    // --- Heart particle cloud ---
-    // Heart curve in 2D, then extrude to 3D "puffy" volume.
-    function heart2D(t){
-      // classic heart param
-      const x = 16*Math.pow(Math.sin(t),3);
-      const y = 13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);
-      return {x, y};
+    function showFortune(text){
+      fortune.textContent = text;
+      fortune.classList.add('show');
     }
 
-    function makeHeartPoints(N=32000){
-      const pos = new Float32Array(N*3);
-      const col = new Float32Array(N*3);
+    function startRedirect(){
+      bar.classList.add('show');// cho vui nhộn 1 chút rồi mới nhảy
+      setTimeout(() => showFortune('Đang kết nối với vũ trụ… 🪐'), 350);
+      setTimeout(() => showFortune('Vũ trụ trả lời: "OK, cho bạn gặp luôn" 😼'), 1400);
+      setTimeout(() => showFortune('3… 2… 1… đi gặp chồng tương lai nèeee 🚀'), 2400);
 
-      for(let i=0;i<N;i++){
-        const t = Math.random()*Math.PI*2;
-        const h = heart2D(t);
-
-        // random fill inside the heart: scale radius toward center
-        const s = Math.pow(Math.random(), 0.55); // more points near surface
-        let x = h.x*s;
-        let y = h.y*s;
-
-        // turn 2D heart into 3D puffy shape
-        const z = (Math.random()*2-1) * (18*(1-s)) + (Math.random()*2-1)*3;
-
-        // scale + position: lift it up like your sample
-        x *= 4.2;
-        y *= 4.2;
-        pos[i*3+0] = x;
-        pos[i*3+1] = y + 120;
-        pos[i*3+2] = z;
-
-        // pink/purple gradient
-        const ny = (y + 60) / 160; // ~0..1
-        const r = 0.92;
-        const g = 0.35 + 0.20*ny;
-        const b = 0.90;
-        col[i*3+0] = r;
-        col[i*3+1] = g;
-        col[i*3+2] = b;
-      }
-
-      const geo = new THREE.BufferGeometry();
-      geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
-      geo.setAttribute('color', new THREE.BufferAttribute(col,3));
-
-      const mat = new THREE.PointsMaterial({
-        size: 1.15,
-        sizeAttenuation: true,
-        vertexColors: true,
-        transparent: true,
-        opacity: 0.9,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false
-      });
-
-      return new THREE.Points(geo, mat);
+      setTimeout(() => {
+        window.location.href = FB_LINK;
+      }, 3400);
     }
 
-    const heart = makeHeartPoints(36000);
-    scene.add(heart);
+    btnFuture.addEventListener('click', () => {
+      if(step >= 1) return;
+      step = 1;
 
-    // --- Floating text ring (sprites) ---
-    function makeTextSprite(text, fontSize=44){
-      const pad = 18;
+      showFortune('Tương lai của bạn: sắp gặp một người… rất hay thả tim và cực kỳ lầy 😳💖');
 
-      const c = document.createElement('canvas');
-      const ctx = c.getContext('2d');
-
-      ctx.font = `700 ${fontSize}px system-ui, Segoe UI, Arial`;
-      const metrics = ctx.measureText(text);
-      const w = Math.ceil(metrics.width + pad*2);
-      const h = Math.ceil(fontSize + pad*2);
-
-      c.width = w;
-      c.height = h;
-
-      // draw
-      ctx.clearRect(0,0,w,h);
-      ctx.font = `700 ${fontSize}px system-ui, Segoe UI, Arial`;
-
-      // glow
-      ctx.shadowColor = 'rgba(255,120,220,0.85)';
-      ctx.shadowBlur = 18;
-      ctx.fillStyle = 'rgba(255,255,255,0.96)';
-      ctx.textBaseline = 'middle';
-      ctx.textAlign = 'center';
-      ctx.fillText(text, w/2, h/2);
-
-      const tex = new THREE.CanvasTexture(c);
-      tex.minFilter = THREE.LinearFilter;
-      tex.magFilter = THREE.LinearFilter;
-
-      const mat = new THREE.SpriteMaterial({
-        map: tex,
-        transparent: true,
-        opacity: 0.9,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending
-      });
-
-      const spr = new THREE.Sprite(mat);
-      // scale sprite in world units
-      const scale = 0.55;
-      spr.scale.set(w*scale*0.12, h*scale*0.12, 1);
-      return spr;
-    }
-
-    const ringGroup = new THREE.Group();
-    scene.add(ringGroup);
-
-    function rebuildRing(phrases){
-      // clear
-      while(ringGroup.children.length){
-        const ch = ringGroup.children.pop();
-        if (ch.material?.map) ch.material.map.dispose();
-        if (ch.material) ch.material.dispose();
-      }
-
-      const radius = 165;
-      const y = 18; // below heart
-      const count = Math.max(12, phrases.length*4);
-
-      for(let i=0;i<count;i++){
-        const txt = phrases[i % phrases.length];
-        const spr = makeTextSprite(txt, 40);
-
-        const ang = (i/count) * Math.PI*2;
-        spr.position.set(
-          Math.cos(ang)*radius,
-          y + (Math.sin(ang*2)*6),
-          Math.sin(ang)*radius
-        );
-        // face outward
-        spr.userData.ang = ang;
-        ringGroup.add(spr);
-      }
-    }
-
-    function parsePhrases(raw){
-      return raw.split('|').map(s=>s.trim()).filter(Boolean);
-    }
-
-    rebuildRing(parsePhrases(document.getElementById('text').value));
-
-    document.getElementById('apply').addEventListener('click', () => {
-      rebuildRing(parsePhrases(document.getElementById('text').value));
+      // Ẩn nút 1, hiện nút 2 (đúng kiểu từng bước)
+      btnFuture.style.display = 'none';
+      btnHusband.style.display = 'inline-block';
     });
 
-    // --- Subtle falling hearts (tiny particles under ring) ---
-    function makeFallingBits(N=1800){
-      const geo = new THREE.BufferGeometry();
-      const pos = new Float32Array(N*3);
-      const vel = new Float32Array(N*3);
-      for(let i=0;i<N;i++){
-        pos[i*3+0] = (Math.random()*2-1)*210;
-        pos[i*3+1] = Math.random()*60;
-        pos[i*3+2] = (Math.random()*2-1)*210;
-        vel[i*3+0] = (Math.random()*2-1)*2.0;
-        vel[i*3+1] = - (10 + Math.random()*26);
-        vel[i*3+2] = (Math.random()*2-1)*2.0;
-      }
-      geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
-      geo.setAttribute('velocity', new THREE.BufferAttribute(vel,3));
-      const mat = new THREE.PointsMaterial({
-        size: 1.1,
-        color: 0xffffff,
-        transparent:true,
-        opacity:0.55,
-        blending: THREE.AdditiveBlending,
-        depthWrite:false
-      });
-      return new THREE.Points(geo, mat);
-    }
-    const bits = makeFallingBits(2000);
-    scene.add(bits);
-
-    // --- Animation ---
-    const clock = new THREE.Clock();
-    function tick(){
-      const t = clock.getElapsedTime();
-      const dt = Math.min(0.033, clock.getDelta());
-
-      // gentle rotations (like your sample)
-      heart.rotation.y = t*0.12;
-      heart.rotation.x = Math.sin(t*0.35)*0.05;
-
-      ringGroup.rotation.y = -t*0.38;
-      ringGroup.rotation.x = Math.sin(t*0.25)*0.06;
-
-      // make sprites always face camera (sprites already do), but we can add slight bob & outward orientation
-      for(const spr of ringGroup.children){
-        const ang = spr.userData.ang ?? 0;
-        spr.position.y = 18 + Math.sin(t*1.1 + ang*3)*7;
+    btnHusband.addEventListener('click', () => {
+      // bắt buộc bấm bước 1 trước
+      if(step === 0){
+        showFortune('Ê khoan 😤 Bấm nút xem tương lai trước đã!');
+        return;
       }
 
-      // stars slow drift
-      stars.rotation.y = t*0.02;
+      if(step >= 2) return;
+      step = 2;
 
-      // falling bits update
-      const p = bits.geometry.attributes.position;
-      const v = bits.geometry.attributes.velocity;
-      for(let i=0;i<p.count;i++){
-        p.array[i*3+0] += v.array[i*3+0]*dt;
-        p.array[i*3+1] += v.array[i*3+1]*dt;
-        p.array[i*3+2] += v.array[i*3+2]*dt;
-
-        // wrap
-        if(p.array[i*3+1] < -40){
-          p.array[i*3+0] = (Math.random()*2-1)*210;
-          p.array[i*3+1] = 60 + Math.random()*40;
-          p.array[i*3+2] = (Math.random()*2-1)*210;
-        }
-      }
-      p.needsUpdate = true;
-
-      controls.update();
-      renderer.render(scene, camera);
-      requestAnimationFrame(tick);
-    }
-    tick();
-
-    // --- Resize ---
-    addEventListener('resize', () => {
-      camera.aspect = innerWidth/innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(innerWidth, innerHeight);
-      renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+      showFortune('Chồng tương lai của bạn là… (drum roll 🥁)');
+      startRedirect();
     });
   </script>
 </body>
 </html>
+
