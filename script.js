@@ -2,6 +2,8 @@ const canvas = document.getElementById("sceneCanvas");
 const ctx = canvas.getContext("2d");
 const countdown = document.getElementById("countdown");
 const messageLayer = document.getElementById("messageLayer");
+const bgm = document.getElementById("bgm");
+const volumeSlider = document.getElementById("volumeSlider");
 
 let width = 0;
 let height = 0;
@@ -13,6 +15,8 @@ let nextTetDate = null;
 let secondsToTet = Infinity;
 let celebrationUntil = 0;
 let celebrationTriggered = false;
+let bgmStarted = false;
+let bgmVolume = 0.45;
 
 const petals = [];
 const bursts = [];
@@ -740,6 +744,16 @@ function frame(now) {
 }
 
 function handleTap(x, y) {
+  if (!bgmStarted && bgm) {
+    bgm.volume = bgmVolume;
+    bgm
+      .play()
+      .then(() => {
+        bgmStarted = true;
+      })
+      .catch(() => {});
+  }
+
   const hitIndex = findPetalAt(x, y);
   if (hitIndex >= 0) {
     petals.splice(hitIndex, 1);
@@ -774,6 +788,15 @@ canvas.addEventListener(
   },
   { passive: false }
 );
+
+if (volumeSlider && bgm) {
+  bgm.volume = bgmVolume;
+  volumeSlider.addEventListener("input", (event) => {
+    const value = Number(event.target.value);
+    bgmVolume = Math.max(0, Math.min(1, value));
+    bgm.volume = bgmVolume;
+  });
+}
 
 window.addEventListener("resize", resize);
 
