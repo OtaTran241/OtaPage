@@ -23,8 +23,9 @@ body {
 
 .volume-control {
   position: fixed;
-  top: 12px;
+  bottom: 14px;
   right: 12px;
+  top: auto;
   z-index: 15;
   display: flex;
   align-items: center;
@@ -134,8 +135,9 @@ body {
 
 @media (max-width: 640px) {
   .volume-control {
-    top: 10px;
+    bottom: 10px;
     right: 10px;
+    top: auto;
     padding: 6px 8px;
   }
 

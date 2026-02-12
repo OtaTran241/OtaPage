@@ -273,14 +273,6 @@ function drawBackground(time) {
   ctx.fillStyle = overlay;
   ctx.fillRect(0, 0, width, height);
 
-  const sideShade = ctx.createRadialGradient(width * 0.5, height * 0.58, width * 0.1, width * 0.5, height * 0.58, width * 0.74);
-  sideShade.addColorStop(0, "rgba(0,0,0,0)");
-  sideShade.addColorStop(0.45, "rgba(16, 8, 24, 0.16)");
-  sideShade.addColorStop(0.74, "rgba(16, 8, 24, 0.34)");
-  sideShade.addColorStop(1, "rgba(16, 8, 24, 0.52)");
-  ctx.fillStyle = sideShade;
-  ctx.fillRect(0, 0, width, height);
-
   for (let i = 0; i < 12; i++) {
     const bx = ((i * 163 + time * 8) % (width + 220)) - 110;
     const by = 26 + (i % 4) * 54 + Math.sin(time * 0.35 + i) * 12;
@@ -293,6 +285,16 @@ function drawBackground(time) {
     ctx.arc(bx, by, r, 0, Math.PI * 2);
     ctx.fill();
   }
+}
+
+function drawSideVignette() {
+  const sideShade = ctx.createRadialGradient(width * 0.5, height * 0.58, width * 0.1, width * 0.5, height * 0.58, width * 0.74);
+  sideShade.addColorStop(0, "rgba(0,0,0,0)");
+  sideShade.addColorStop(0.45, "rgba(16, 8, 24, 0.16)");
+  sideShade.addColorStop(0.74, "rgba(16, 8, 24, 0.34)");
+  sideShade.addColorStop(1, "rgba(16, 8, 24, 0.52)");
+  ctx.fillStyle = sideShade;
+  ctx.fillRect(0, 0, width, height);
 }
 
 function drawPetal(p) {
@@ -734,6 +736,7 @@ function frame(now) {
   }
   drawFireworks();
   drawBranchOverlay();
+  drawSideVignette();
 
   if (hudTimer >= 1) {
     hudTimer = 0;
