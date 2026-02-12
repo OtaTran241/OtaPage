@@ -1,0 +1,124 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: "Georgia", "Times New Roman", serif;
+  background: radial-gradient(circle at 15% 20%, #dff2ff, #ffdced 56%, #f6b8d8 100%);
+}
+
+#sceneCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.bottom-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  pointer-events: none;
+}
+
+.countdown {
+  padding: 0;
+  border-radius: 999px;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: #fff7fd;
+  text-shadow:
+    0 1px 0 rgba(121, 37, 82, 0.5),
+    0 4px 14px rgba(70, 22, 57, 0.55);
+  min-width: 96px;
+  text-align: center;
+}
+
+.side-icon {
+  font-size: 36px;
+  line-height: 1;
+  filter: drop-shadow(0 6px 10px rgba(65, 35, 60, 0.28));
+}
+
+#messageLayer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 12;
+}
+
+.petal-message {
+  position: absolute;
+  transform: translate3d(-50%, -50%, 0);
+  padding: 11px 16px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(255, 251, 253, 0.96), rgba(255, 236, 246, 0.92));
+  color: #b23c74;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+  box-shadow: 0 14px 32px rgba(137, 55, 94, 0.23);
+  animation: floatOut 2.2s linear forwards;
+  white-space: nowrap;
+  transform-origin: center;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  contain: layout paint style;
+}
+
+@keyframes floatOut {
+  0% {
+    opacity: 0;
+    transform: translate3d(-50%, -56%, 0);
+  }
+  10% {
+    opacity: 1;
+    transform: translate3d(-50%, -50%, 0);
+  }
+  68% {
+    opacity: 0.92;
+    transform: translate3d(-50%, -14%, 0);
+  }
+  88% {
+    opacity: 0.45;
+    transform: translate3d(-50%, 0%, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-50%, 8%, 0);
+  }
+}
+
+@media (max-width: 640px) {
+  .bottom-bar {
+    bottom: 10px;
+    gap: 10px;
+  }
+
+  .countdown {
+    font-size: 20px;
+    min-width: 82px;
+  }
+
+  .side-icon {
+    font-size: 28px;
+  }
+}
