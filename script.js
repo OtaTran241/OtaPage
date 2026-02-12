@@ -118,9 +118,9 @@ function spawnBurst(x, y, force = random(260, 380), life = 1.2) {
 
 function spawnFirework(
   x = random(width * 0.2, width * 0.84),
-  y = random(height * 0.02, height * 0.24),
+  y = random(height * 0.11, height * 0.36),
   scale = 1,
-  launchX = x
+  launchX = x + random(-Math.max(80, width * 0.12), Math.max(80, width * 0.12))
 ) {
   const palette = [
     "#ffd2e8",
@@ -136,9 +136,12 @@ function spawnFirework(
   ];
   const color = palette[Math.floor(random(0, palette.length))];
   const startY = height + random(20, 120);
-  const travelTime = random(0.82, 1.18);
+  const travelTime = random(1.9, 2.5);
   const vx = (x - launchX) / travelTime;
   const vy = (y - startY - 0.5 * FIREWORK_GRAVITY * travelTime * travelTime) / travelTime;
+  const curveAmp = random(-28, 28) * (0.8 + scale * 0.2);
+  const curveFreq = random(1.1, 2.4);
+  const curvePhase = random(0, Math.PI * 2);
 
   fireworks.push({
     x: launchX,
@@ -147,8 +150,11 @@ function spawnFirework(
     ty: y,
     vx,
     vy,
+    curveAmp,
+    curveFreq,
+    curvePhase,
     travelTime,
-    life: 1.4,
+    life: travelTime + random(0.45, 0.9),
     age: 0,
     color,
     scale,
@@ -261,6 +267,14 @@ function drawBackground(time) {
   overlay.addColorStop(0.65, "rgba(55, 32, 58, 0.08)");
   overlay.addColorStop(1, "rgba(77, 40, 74, 0.14)");
   ctx.fillStyle = overlay;
+  ctx.fillRect(0, 0, width, height);
+
+  const sideShade = ctx.createRadialGradient(width * 0.5, height * 0.58, width * 0.1, width * 0.5, height * 0.58, width * 0.74);
+  sideShade.addColorStop(0, "rgba(0,0,0,0)");
+  sideShade.addColorStop(0.45, "rgba(16, 8, 24, 0.16)");
+  sideShade.addColorStop(0.74, "rgba(16, 8, 24, 0.34)");
+  sideShade.addColorStop(1, "rgba(16, 8, 24, 0.52)");
+  ctx.fillStyle = sideShade;
   ctx.fillRect(0, 0, width, height);
 
   for (let i = 0; i < 12; i++) {
@@ -396,7 +410,7 @@ function updateFireworks(dt, nowMs) {
     const nearTet = secondsToTet <= 10;
     const inShow = nowMs < celebrationUntil;
     const scale = inShow ? random(1.8, 2.8) : nearTet ? random(1.3, 2.1) : random(0.9, 1.4);
-    spawnFirework(random(width * 0.12, width * 0.88), random(height * 0.03, height * 0.32), scale);
+    spawnFirework(random(width * 0.12, width * 0.88), random(height * 0.12, height * 0.42), scale);
     fireworksCooldown = inShow ? random(0.08, 0.22) : nearTet ? random(0.25, 0.6) : random(1.0, 2.2);
   }
 
@@ -415,13 +429,14 @@ function updateFireworks(dt, nowMs) {
         color: Math.random() > 0.5 ? "#ffe6a8" : "#ffd4f0",
       });
     }
-    f.x += f.vx * dt;
+    const curveVX = Math.sin(f.age * f.curveFreq + f.curvePhase) * f.curveAmp;
+    f.x += (f.vx + curveVX) * dt;
     f.y += f.vy * dt;
     f.vy += FIREWORK_GRAVITY * dt;
     const dx = f.tx - f.x;
     const dy = f.ty - f.y;
     const closeEnough = dx * dx + dy * dy < 20 * 20;
-    if (f.age >= f.travelTime || closeEnough || f.age > f.life) {
+    if (f.age >= f.travelTime || closeEnough) {
       f.x = f.tx;
       f.y = f.ty;
       explodeFirework(f);
