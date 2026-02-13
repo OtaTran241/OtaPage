@@ -81,6 +81,64 @@ body {
   filter: drop-shadow(0 6px 10px rgba(65, 35, 60, 0.28));
 }
 
+.event-love-sides {
+  position: fixed;
+  inset: 0;
+  z-index: 17;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.event-love-sides.visible {
+  opacity: 1;
+}
+
+.event-love-side {
+  position: absolute;
+  top: 50%;
+  width: min(20vw, 220px);
+  height: auto;
+  filter: drop-shadow(0 16px 28px rgba(15, 7, 22, 0.36));
+}
+
+.event-love-left {
+  left: clamp(10px, 3.8vw, 72px);
+  transform: translateY(-50%);
+  animation: loveSidesFloatLeft 2.6s ease-in-out infinite;
+}
+
+.event-love-right {
+  right: clamp(10px, 3.8vw, 72px);
+  transform: translateY(-50%) scaleX(-1);
+  animation: loveSidesFloatRight 2.6s ease-in-out infinite;
+  animation-delay: 0.7s;
+}
+
+@keyframes loveSidesFloatLeft {
+  0% {
+    transform: translateY(-50%);
+  }
+  50% {
+    transform: translateY(calc(-50% - 8px));
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+@keyframes loveSidesFloatRight {
+  0% {
+    transform: translateY(-50%) scaleX(-1);
+  }
+  50% {
+    transform: translateY(calc(-50% - 8px)) scaleX(-1);
+  }
+  100% {
+    transform: translateY(-50%) scaleX(-1);
+  }
+}
+
 .new-year-message {
   position: fixed;
   left: 50%;
@@ -91,10 +149,10 @@ body {
   overflow: auto;
   padding: 16px 20px;
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   background:
-    linear-gradient(160deg, rgba(12, 11, 22, 0.68), rgba(44, 19, 53, 0.57)),
-    radial-gradient(circle at 14% 18%, rgba(255, 219, 240, 0.22), transparent 48%);
+    linear-gradient(160deg, rgba(12, 11, 22, 0.61), rgba(44, 19, 53, 0.5)),
+    radial-gradient(circle at 14% 18%, rgba(255, 219, 240, 0.18), transparent 48%);
   color: #fff5fb;
   font-family: "Trebuchet MS", "Segoe UI", sans-serif;
   font-size: 20px;
@@ -242,6 +300,19 @@ body {
 
   .side-icon {
     font-size: 28px;
+  }
+
+  .event-love-side {
+    width: min(30vw, 160px);
+    top: 56%;
+  }
+
+  .event-love-left {
+    left: 6px;
+  }
+
+  .event-love-right {
+    right: 6px;
   }
 
   .new-year-message {

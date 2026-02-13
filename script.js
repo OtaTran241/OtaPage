@@ -3,6 +3,7 @@ const ctx = canvas.getContext("2d");
 const countdown = document.getElementById("countdown");
 const messageLayer = document.getElementById("messageLayer");
 const newYearMessage = document.getElementById("newYearMessage");
+const eventLoveSides = document.getElementById("eventLoveSides");
 const rabbitReward = document.getElementById("rabbitReward");
 const bgm = document.getElementById("bgm");
 const volumeSlider = document.getElementById("volumeSlider");
@@ -854,11 +855,19 @@ function initNewYearMessage() {
   }
 }
 
+function setEventLoveSidesVisible(visible) {
+  if (!eventLoveSides) {
+    return;
+  }
+  eventLoveSides.classList.toggle("visible", Boolean(visible));
+}
+
 function hideNewYearMessage() {
   newYearMessageUntil = 0;
   if (newYearMessage) {
     newYearMessage.classList.remove("visible");
   }
+  setEventLoveSidesVisible(false);
 }
 
 function showNewYearMessage(durationMs) {
@@ -867,6 +876,7 @@ function showNewYearMessage(durationMs) {
   }
   newYearMessageUntil = performance.now() + Math.max(1000, durationMs || NEW_YEAR_MESSAGE_DURATION_MS);
   newYearMessage.classList.add("visible");
+  setEventLoveSidesVisible(true);
 }
 
 function updateNewYearMessageVisibility(nowMs) {
