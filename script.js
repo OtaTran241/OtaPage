@@ -53,8 +53,40 @@ const DEFAULT_FIREWORK_COLORS = [
   "#ffb1a8",
 ];
 const DEFAULT_FIREWORK_ACCENTS = ["#ffffff", "#fff7cf", "#ffe6f5", "#dff9ff", "#ffd5a2", "#c5ffef"];
-const EVENT_CLICK_FIREWORK_COLORS = ["#ff2d2d", "#ffd400", "#ff8a1f", "#8f52ff", "#29d65f", "#ff72cc", "#ffffff"];
-const EVENT_CLICK_FIREWORK_ACCENTS = ["#ffffff", "#ff2d2d", "#ffd400", "#ff8a1f", "#8f52ff", "#29d65f", "#ff72cc"];
+const EVENT_CLICK_FIREWORK_COLORS = [
+  "#ff2d2d",
+  "#ff2d2d",
+  "#ff3f3f",
+  "#ff3f3f",
+  "#23b5ff",
+  "#23b5ff",
+  "#29d65f",
+  "#29d65f",
+  "#29d65f",
+  "#29d65f",
+  "#43e173",
+  "#ff9cc8",
+  "#ffe4a6",
+  "#b4f6ff",
+  "#ffc5e2",
+  "#ffb1a8",
+];
+const EVENT_CLICK_FIREWORK_ACCENTS = ["#ffffff", "#ff2d2d", "#ff4a4a", "#29d65f", "#4ae37a", "#ffe06f"];
+const EVENT_SHOW_FIREWORK_COLORS = [
+  "#29d65f",
+  "#29d65f",
+  "#36e56d",
+  "#61ef89",
+  "#23b5ff",
+  "#23b5ff",
+  "#4cc6ff",
+  "#78d6ff",
+  "#1fd0b0",
+  "#45f0c3",
+  "#ffe97a",
+  "#ffffff",
+];
+const EVENT_SHOW_FIREWORK_ACCENTS = ["#ffffff", "#dff8ff", "#d8ffe9", "#9ee2ff", "#79ffc0", "#54cbff"];
 const DUCK_MAX_COUNT = 6;
 const RABBIT_MAX_COUNT = 5;
 const RABBIT_MARGIN = 10;
@@ -699,6 +731,10 @@ function triggerMidnightShow() {
   showNewYearMessage(NEW_YEAR_MESSAGE_DURATION_MS);
 }
 
+function spawnEventFirework(x, y, scale, launchX, launchDelay = 0) {
+  spawnFirework(x, y, scale, launchX, launchDelay, EVENT_SHOW_FIREWORK_COLORS, EVENT_SHOW_FIREWORK_ACCENTS);
+}
+
 function spawnCelebrationSweep(direction) {
   const count = Math.floor(random(9, 12));
   const leftX = width * 0.1;
@@ -716,16 +752,93 @@ function spawnCelebrationSweep(direction) {
     spawnBurst(x, y, random(320, 460), 1.35);
     for (let j = 0; j < burstCount; j++) {
       const launchX = x + random(-launchSpread, launchSpread);
-      spawnFirework(
+      spawnEventFirework(
         x + random(-12, 12),
         y + random(-10, 10),
         random(1.7, 2.6),
         launchX,
-        i * stepDelay + j * 0.015,
-        EVENT_CLICK_FIREWORK_COLORS,
-        EVENT_CLICK_FIREWORK_ACCENTS
+        i * stepDelay + j * 0.015
       );
     }
+  }
+}
+
+function spawnCelebrationDiagonal(direction) {
+  const count = Math.floor(random(9, 13));
+  const fromLeft = direction > 0;
+  const startX = fromLeft ? width * 0.1 : width * 0.9;
+  const endX = fromLeft ? width * 0.88 : width * 0.12;
+  const startY = random(height * 0.34, height * 0.5);
+  const endY = random(height * 0.12, height * 0.26);
+  const launchSideX = fromLeft ? width * 0.12 : width * 0.88;
+
+  for (let i = 0; i < count; i++) {
+    const t = count <= 1 ? 0.5 : i / (count - 1);
+    const x = startX + (endX - startX) * t + random(-14, 14);
+    const y = startY + (endY - startY) * t + random(-10, 10);
+    const burstCount = 3 + Math.floor(random(0, 3));
+    spawnBurst(x, y, random(300, 430), 1.25);
+    for (let j = 0; j < burstCount; j++) {
+      spawnEventFirework(
+        x + random(-10, 10),
+        y + random(-10, 8),
+        random(1.45, 2.3),
+        launchSideX + random(-width * 0.1, width * 0.1),
+        i * 0.07 + j * 0.02
+      );
+    }
+  }
+}
+
+function spawnCelebrationFan(direction) {
+  const count = Math.floor(random(10, 14));
+  const fromLeft = direction > 0;
+  const launchBase = fromLeft ? width * 0.14 : width * 0.86;
+  const targetCenter = fromLeft ? width * 0.62 : width * 0.38;
+  const targetY = random(height * 0.15, height * 0.32);
+
+  for (let i = 0; i < count; i++) {
+    const t = count <= 1 ? 0.5 : i / (count - 1);
+    const spread = (t - 0.5) * 2;
+    const x = targetCenter + spread * width * 0.28 + random(-10, 10);
+    const y = targetY + Math.abs(spread) * height * 0.1 + random(-8, 10);
+    const launchX = launchBase + spread * width * 0.08 + random(-18, 18);
+    spawnBurst(x, y, random(290, 420), 1.2);
+    spawnEventFirework(x, y, random(1.45, 2.35), launchX, i * 0.055);
+    if (Math.random() > 0.45) {
+      spawnEventFirework(x + random(-14, 14), y + random(-10, 10), random(1.2, 1.95), launchX + random(-28, 28), i * 0.055 + 0.02);
+    }
+  }
+}
+
+function spawnCelebrationArcBurst() {
+  const count = Math.floor(random(12, 17));
+  const cx = width * 0.5;
+  const cy = random(height * 0.2, height * 0.32);
+  const rx = width * random(0.26, 0.34);
+  const ry = height * random(0.1, 0.15);
+
+  for (let i = 0; i < count; i++) {
+    const t = count <= 1 ? 0.5 : i / (count - 1);
+    const angle = Math.PI * (1.08 * t + 0.02);
+    const x = cx + Math.cos(angle) * rx + random(-12, 12);
+    const y = cy + Math.sin(angle) * ry + random(-9, 9);
+    const launchX = cx + Math.cos(angle) * width * 0.18 + random(-26, 26);
+    spawnBurst(x, y, random(300, 430), 1.24);
+    spawnEventFirework(x, y, random(1.4, 2.25), launchX, i * 0.05);
+  }
+}
+
+function spawnCelebrationPattern(direction) {
+  const roll = Math.random();
+  if (roll < 0.3) {
+    spawnCelebrationSweep(direction);
+  } else if (roll < 0.56) {
+    spawnCelebrationDiagonal(direction);
+  } else if (roll < 0.8) {
+    spawnCelebrationFan(direction);
+  } else {
+    spawnCelebrationArcBurst();
   }
 }
 
@@ -1060,7 +1173,7 @@ function updateFireworks(dt, nowMs) {
 
   if (eventActive) {
     if (nowMs >= celebrationNextSweepAt) {
-      spawnCelebrationSweep(celebrationSweepDirection);
+      spawnCelebrationPattern(celebrationSweepDirection);
       celebrationSweepDirection *= -1;
       celebrationNextSweepAt = nowMs + CELEBRATION_SWEEP_INTERVAL_MS;
     }
