@@ -23,18 +23,18 @@ body {
 
 .volume-control {
   position: fixed;
-  bottom: 14px;
-  right: 12px;
-  top: auto;
+  top: 12px;
+  left: 12px;
   z-index: 15;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 7px 10px;
   border-radius: 999px;
-  background: rgba(20, 15, 34, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  backdrop-filter: blur(3px);
+  background: rgba(20, 15, 34, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(2px);
+  opacity: 0.78;
 }
 
 .volume-control span {
@@ -79,6 +79,92 @@ body {
   font-size: 36px;
   line-height: 1;
   filter: drop-shadow(0 6px 10px rgba(65, 35, 60, 0.28));
+}
+
+.new-year-message {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 18;
+  width: min(900px, 92vw);
+  max-height: min(56vh, 520px);
+  overflow: auto;
+  padding: 16px 20px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background:
+    linear-gradient(160deg, rgba(12, 11, 22, 0.68), rgba(44, 19, 53, 0.57)),
+    radial-gradient(circle at 14% 18%, rgba(255, 219, 240, 0.22), transparent 48%);
+  color: #fff5fb;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.55;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+  box-shadow: 0 22px 48px rgba(9, 7, 17, 0.32);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, -42%) scale(0.985);
+  transition:
+    opacity 0.45s ease,
+    transform 0.55s cubic-bezier(0.2, 0.72, 0.2, 1),
+    visibility 0s linear 0.5s;
+}
+
+.new-year-message.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%) scale(1);
+  transition-delay: 0s;
+}
+
+.new-year-message p {
+  margin: 0;
+}
+
+.new-year-message p + p {
+  margin-top: 10px;
+}
+
+.rabbit-reward {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 19;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.7) rotate(-5deg);
+  filter: drop-shadow(0 20px 40px rgba(24, 10, 34, 0.42));
+}
+
+.rabbit-reward img {
+  display: block;
+  width: min(58vw, 500px);
+  height: auto;
+}
+
+.rabbit-reward.visible {
+  animation: rabbitRewardPop 4.2s cubic-bezier(0.2, 0.78, 0.2, 1) forwards;
+}
+
+@keyframes rabbitRewardPop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.56) rotate(-8deg);
+  }
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.05) rotate(2deg);
+  }
+  64% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(-1deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.92) rotate(3deg);
+  }
 }
 
 #messageLayer {
@@ -135,9 +221,8 @@ body {
 
 @media (max-width: 640px) {
   .volume-control {
-    bottom: 10px;
-    right: 10px;
-    top: auto;
+    top: 10px;
+    left: 10px;
     padding: 6px 8px;
   }
 
@@ -157,5 +242,24 @@ body {
 
   .side-icon {
     font-size: 28px;
+  }
+
+  .new-year-message {
+    top: 50%;
+    width: min(94vw, 640px);
+    max-height: min(54vh, 420px);
+    padding: 12px 14px;
+    font-size: 16px;
+    line-height: 1.5;
+    border-radius: 14px;
+    transform: translate(-50%, -44%) scale(0.985);
+  }
+
+  .new-year-message.visible {
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .rabbit-reward img {
+    width: min(82vw, 420px);
   }
 }
