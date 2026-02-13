@@ -48,7 +48,7 @@ const cornerRabbits = [];
 
 const MAX_PETALS = 200;
 const BASE_FALL = 8;
-const GLOW_PETAL_RATE = 0.065;
+const GLOW_PETAL_RATE = 0.13;
 const TIME_ZONE = 7;
 const FIREWORK_GRAVITY = 210;
 const CELEBRATION_SWEEP_INTERVAL_MS = 4000;
