@@ -7,6 +7,14 @@ const eventLoveSides = document.getElementById("eventLoveSides");
 const rabbitReward = document.getElementById("rabbitReward");
 const bgm = document.getElementById("bgm");
 const volumeSlider = document.getElementById("volumeSlider");
+const bottomBar = document.querySelector(".bottom-bar");
+const bottomDuckIcon = document.querySelector(".bottom-bar .side-icon.duck");
+const bottomRabbitIcon = document.querySelector(".bottom-bar .side-icon.rabbit");
+const celebrationIntroDim = document.getElementById("celebrationIntroDim");
+const celebrationIntroLayer = document.getElementById("celebrationIntroLayer");
+const celebrationIntroDuck = document.getElementById("celebrationIntroDuck");
+const celebrationIntroRabbit = document.getElementById("celebrationIntroRabbit");
+const fireworkLightOverlay = document.getElementById("fireworkLightOverlay");
 
 let width = 0;
 let height = 0;
@@ -26,6 +34,9 @@ let bgmStarted = false;
 let bgmVolume = 0.45;
 let bgmTrackIndex = -1;
 let rabbitRewardTimer = 0;
+let eventLoveSidesShowTimer = 0;
+let lastCelebrationBlastX = 0;
+let lastCelebrationBlastY = 0;
 
 const petals = [];
 const bursts = [];
@@ -35,11 +46,18 @@ const explosionFlashes = [];
 const duckSwimmers = [];
 const cornerRabbits = [];
 
-const MAX_PETALS = 300;
+const MAX_PETALS = 200;
 const BASE_FALL = 8;
+const GLOW_PETAL_RATE = 0.065;
 const TIME_ZONE = 7;
 const FIREWORK_GRAVITY = 210;
 const CELEBRATION_SWEEP_INTERVAL_MS = 4000;
+const CELEBRATION_INTRO_DURATION_MS = 2400;
+const CELEBRATION_INTRO_SPINS = 2.8;
+const CELEBRATION_POST_BLAST_DELAY_MS = 360;
+const INTRO_FIREWORK_LIGHT_BOOST = 1.42;
+const INTRO_SIDE_SHADE_BOOST = 0.58;
+const EVENT_LOVE_SIDES_SHOW_DELAY_MS = 700;
 const NEW_YEAR_MESSAGE_DURATION_MS = 10 * 60 * 1000;
 const DEFAULT_FIREWORK_COLORS = [
   "#ffd2e8",
@@ -77,12 +95,12 @@ const EVENT_SHOW_FIREWORK_COLORS = [
   "#29d65f",
   "#29d65f",
   "#36e56d",
-  "#61ef89",
+  "#ff3f3f",
   "#23b5ff",
   "#23b5ff",
   "#4cc6ff",
   "#78d6ff",
-  "#1fd0b0",
+  "#ff3f3f",
   "#45f0c3",
   "#ffe97a",
   "#ffffff",
@@ -142,6 +160,19 @@ const rabbitHideSeek = {
   hits: 0,
   endAt: 0,
 };
+const celebrationIntro = {
+  active: false,
+  startAt: 0,
+  duration: CELEBRATION_INTRO_DURATION_MS,
+  pendingStartAt: 0,
+  duckStartX: 0,
+  duckStartY: 0,
+  rabbitStartX: 0,
+  rabbitStartY: 0,
+  originCenterX: 0,
+  originCenterY: 0,
+  startRadius: 48,
+};
 
 const bgImage = new Image();
 bgImage.src = "mount-fuji-cherry-blossom-scenery-anime-art.jpg";
@@ -187,6 +218,65 @@ const wind = {
 
 function random(min, max) {
   return Math.random() * (max - min) + min;
+}
+
+function clamp01(value) {
+  return Math.max(0, Math.min(1, value));
+}
+
+function lerp(from, to, t) {
+  return from + (to - from) * t;
+}
+
+function easeInOutCubic(t) {
+  const v = clamp01(t);
+  if (v < 0.5) {
+    return 4 * v * v * v;
+  }
+  return 1 - Math.pow(-2 * v + 2, 3) / 2;
+}
+
+function getElementCenter(element, fallbackX, fallbackY) {
+  if (!element) {
+    return { x: fallbackX, y: fallbackY };
+  }
+  const rect = element.getBoundingClientRect();
+  return {
+    x: rect.left + rect.width * 0.5,
+    y: rect.top + rect.height * 0.5,
+  };
+}
+
+function spawnFireworkOverlayFlash(x, y, color, radiusPx, durationMs, intensity = 1) {
+  if (!fireworkLightOverlay || !Number.isFinite(x) || !Number.isFinite(y)) {
+    return;
+  }
+  const size = Math.max(90, Number.isFinite(radiusPx) ? radiusPx * 2 : 180);
+  const duration = Math.max(260, Number.isFinite(durationMs) ? durationMs : 900);
+  const boost = Math.max(0.45, Number.isFinite(intensity) ? intensity : 1);
+  const node = document.createElement("div");
+  node.className = "firework-overlay-flash";
+  node.style.left = `${x}px`;
+  node.style.top = `${y}px`;
+  node.style.setProperty("--flash-size", `${size}px`);
+  node.style.setProperty("--flash-duration", `${Math.round(duration)}ms`);
+  node.style.setProperty("--flash-blur", `${Math.round(size * 0.05)}px`);
+  node.style.background = `radial-gradient(circle, rgba(255,255,255,${Math.min(0.75, 0.2 + boost * 0.12)}) 0%, ${rgbaFromHex(
+    color,
+    Math.min(0.46, 0.14 + boost * 0.15)
+  )} 34%, ${rgbaFromHex(color, Math.min(0.16, 0.05 + boost * 0.06))} 62%, rgba(255,255,255,0) 100%)`;
+  fireworkLightOverlay.appendChild(node);
+
+  const maxNodes = 90;
+  while (fireworkLightOverlay.childElementCount > maxNodes && fireworkLightOverlay.firstElementChild) {
+    fireworkLightOverlay.removeChild(fireworkLightOverlay.firstElementChild);
+  }
+
+  setTimeout(() => {
+    if (node.parentNode) {
+      node.parentNode.removeChild(node);
+    }
+  }, duration + 110);
 }
 
 function playBgm() {
@@ -258,6 +348,76 @@ function showFloatingText(text, x, y, durationMs = 1600) {
       node.parentNode.removeChild(node);
     }
   }, Math.max(700, durationMs));
+}
+
+function showMelonDrop(x, y) {
+  if (!messageLayer) {
+    return;
+  }
+  const node = document.createElement("img");
+  node.className = "petal-gift-drop";
+  node.src = "melon.png";
+  node.onerror = () => {
+    node.onerror = null;
+    node.src = "megon.png";
+  };
+  node.alt = "";
+  const size = Math.round(random(74, 112));
+  node.style.left = `${x}px`;
+  node.style.top = `${y}px`;
+  node.style.width = `${size}px`;
+  messageLayer.appendChild(node);
+
+  const state = {
+    y,
+    vy: random(-360, -300),
+    gravity: random(900, 1080),
+    rot: random(-10, 10),
+    rotV: random(-46, 46),
+    scale: 0.42,
+  };
+  const popDuration = 0.2;
+  let elapsed = 0;
+  let last = performance.now();
+
+  const tick = (now) => {
+    if (!node.parentNode) {
+      return;
+    }
+    const dt = Math.min(0.033, (now - last) / 1000 || 0.016);
+    last = now;
+    elapsed += dt;
+
+    if (elapsed < popDuration) {
+      const t = Math.max(0, Math.min(1, elapsed / popDuration));
+      const eased = 1 - Math.pow(1 - t, 3);
+      state.scale = 0.42 + (1.08 - 0.42) * eased;
+    } else {
+      state.scale += (1 - state.scale) * Math.min(1, dt * 7.2);
+    }
+
+    state.y += state.vy * dt;
+    state.vy += state.gravity * dt;
+    state.rot += state.rotV * dt;
+    state.rotV *= 1 - Math.min(0.9, dt * 1.9);
+
+    node.style.top = `${state.y}px`;
+    node.style.transform = `translate3d(-50%, -50%, 0) scale(${state.scale}) rotate(${state.rot.toFixed(2)}deg)`;
+
+    if (state.y - size * 0.45 > height + 24) {
+      node.parentNode.removeChild(node);
+      return;
+    }
+
+    requestAnimationFrame(tick);
+  };
+
+  requestAnimationFrame(tick);
+}
+
+function showLoveMessage(x, y) {
+  const text = LOVE_TEXTS[Math.floor(random(0, LOVE_TEXTS.length))];
+  showFloatingText(text, x, y, 2200);
 }
 
 function resetRabbitHideSeek() {
@@ -616,13 +776,13 @@ function drawCritters(timeSec) {
 
 function randomPetalX() {
   const r = Math.random();
-  if (r < 0.44) {
-    return random(-90, width * 0.32);
+  if (r < 0.47) {
+    return random(-90, width * 0.3);
   }
-  if (r < 0.88) {
-    return random(width * 0.68, width + 90);
+  if (r < 0.94) {
+    return random(width * 0.7, width + 90);
   }
-  return random(width * 0.32, width * 0.68);
+  return random(width * 0.4, width * 0.6);
 }
 
 function spawnPetal(x = randomPetalX(), y = random(-height, 0)) {
@@ -639,6 +799,9 @@ function spawnPetal(x = randomPetalX(), y = random(-height, 0)) {
     color: Math.random() > 0.5 ? "#ffd9ea" : "#ffc4dc",
     alpha: random(0.72, 0.95),
     sprite: Math.random() > 0.5 ? 0 : 1,
+    glow: Math.random() < GLOW_PETAL_RATE,
+    glowPulse: random(0.8, 1.45),
+    glowSeed: random(0, Math.PI * 2),
   });
 }
 
@@ -653,7 +816,8 @@ function spawnFirework(
   launchX = x + random(-Math.max(80, width * 0.12), Math.max(80, width * 0.12)),
   launchDelay = 0,
   colorPalette = DEFAULT_FIREWORK_COLORS,
-  accentPalette = DEFAULT_FIREWORK_ACCENTS
+  accentPalette = DEFAULT_FIREWORK_ACCENTS,
+  lightBoost = 1
 ) {
   const sourcePalette = Array.isArray(colorPalette) && colorPalette.length > 0 ? colorPalette : DEFAULT_FIREWORK_COLORS;
   const sourceAccents = Array.isArray(accentPalette) && accentPalette.length > 0 ? accentPalette : DEFAULT_FIREWORK_ACCENTS;
@@ -665,8 +829,9 @@ function spawnFirework(
   const curveAmp = random(-28, 28) * (0.8 + scale * 0.2);
   const curveFreq = random(1.1, 2.4);
   const curvePhase = random(0, Math.PI * 2);
-
-  fireworks.push({
+  const delay = Math.max(0, launchDelay);
+  const nowMs = typeof performance !== "undefined" ? performance.now() : 0;
+  const firework = {
     x: launchX,
     y: startY,
     tx: x,
@@ -682,11 +847,16 @@ function spawnFirework(
     color,
     accentPalette: sourceAccents,
     scale,
-    delay: Math.max(0, launchDelay),
-  });
+    delay,
+    lightBoost: Math.max(0.6, Number.isFinite(lightBoost) ? lightBoost : 1),
+    expectedExplodeAt: nowMs + (delay + travelTime) * 1000,
+  };
+  fireworks.push(firework);
+  return firework;
 }
 
 function explodeFirework(f) {
+  const lightBoost = Math.max(0.6, Number.isFinite(f.lightBoost) ? f.lightBoost : 1);
   const count = Math.floor((34 + random(0, 16)) * f.scale);
   const speedMin = 72 * f.scale;
   const speedMax = 185 * f.scale;
@@ -701,7 +871,7 @@ function explodeFirework(f) {
       vy: Math.sin(angle) * speed,
       life: random(0.8, 1.8) * (0.95 + f.scale * 0.15),
       age: 0,
-      size: random(1.6, 3.6) * (0.9 + f.scale * 0.25),
+      size: random(1.6, 3.6) * (0.9 + f.scale * 0.25) * (0.9 + lightBoost * 0.15),
       color: Math.random() > 0.45 ? f.color : accentPalette[Math.floor(random(0, accentPalette.length))],
     });
   }
@@ -712,28 +882,218 @@ function explodeFirework(f) {
       x: f.x + random(-8, 8),
       y: f.y + random(-8, 8),
       color: Math.random() > 0.5 ? f.color : accentPalette[Math.floor(random(0, accentPalette.length))],
-      radius: random(120, 210) * f.scale * (i === 0 ? 1 : 0.7),
-      life: random(0.42, 0.82) * (i === 0 ? 1 : 0.88),
+      radius: random(120, 210) * f.scale * (i === 0 ? 1 : 0.7) * (0.9 + lightBoost * 0.24),
+      life: random(0.42, 0.82) * (i === 0 ? 1 : 0.88) * (0.95 + lightBoost * 0.12),
       age: 0,
-      intensity: random(0.62, 0.96),
+      intensity: random(0.62, 0.96) * (0.9 + lightBoost * 0.32),
+      lightBoost,
     });
   }
+
+  if (lightBoost > 1.12) {
+    const overlayCount = Math.random() > 0.84 ? 2 : 1;
+    for (let i = 0; i < overlayCount; i++) {
+      const overlayColor = Math.random() > 0.5 ? f.color : accentPalette[Math.floor(random(0, accentPalette.length))];
+      spawnFireworkOverlayFlash(
+        f.x + random(-14, 14),
+        f.y + random(-14, 14),
+        overlayColor,
+        random(130, 220) * f.scale * (0.86 + lightBoost * 0.22),
+        random(760, 1180) * (0.9 + lightBoost * 0.12),
+        lightBoost
+      );
+    }
+  }
+
   if (explosionFlashes.length > 180) {
     explosionFlashes.splice(0, explosionFlashes.length - 180);
   }
 }
 
-function triggerMidnightShow() {
+function syncCelebrationIntroIcons() {
+  if (celebrationIntroDuck && bottomDuckIcon) {
+    celebrationIntroDuck.textContent = bottomDuckIcon.textContent || "🐰";
+  }
+  if (celebrationIntroRabbit && bottomRabbitIcon) {
+    celebrationIntroRabbit.textContent = bottomRabbitIcon.textContent || "🦆";
+  }
+}
+
+function setCelebrationIntroVisualState(dimVisible, layerVisible, hideBottomIcons) {
+  if (celebrationIntroDim) {
+    celebrationIntroDim.classList.toggle("visible", Boolean(dimVisible));
+  }
+  if (celebrationIntroLayer) {
+    celebrationIntroLayer.classList.toggle("visible", Boolean(layerVisible));
+  }
+  if (bottomBar) {
+    bottomBar.classList.toggle("intro-flight", Boolean(hideBottomIcons));
+  }
+}
+
+function setCelebrationIntroVisible(visible) {
+  const v = Boolean(visible);
+  setCelebrationIntroVisualState(v, v, v);
+}
+
+function cancelCelebrationIntro() {
+  celebrationIntro.active = false;
+  celebrationIntro.pendingStartAt = 0;
+  setCelebrationIntroVisualState(false, false, false);
+  if (fireworkLightOverlay) {
+    fireworkLightOverlay.textContent = "";
+  }
+}
+
+function triggerCelebrationStartFromIntro() {
+  celebrationIntro.pendingStartAt = 0;
+  setCelebrationIntroVisualState(false, false, false);
+  if (fireworkLightOverlay) {
+    fireworkLightOverlay.textContent = "";
+  }
   const now = performance.now();
   celebrationModeEnabled = true;
   celebrationUntil = now + NEW_YEAR_MESSAGE_DURATION_MS;
-  celebrationNextSweepAt = now + 260;
-  celebrationSweepDirection = 1;
+  celebrationNextSweepAt = now + CELEBRATION_SWEEP_INTERVAL_MS;
+  celebrationSweepDirection = Math.random() > 0.5 ? 1 : -1;
   showNewYearMessage(NEW_YEAR_MESSAGE_DURATION_MS);
+  spawnCelebrationPattern(celebrationSweepDirection);
+  celebrationSweepDirection *= -1;
 }
 
-function spawnEventFirework(x, y, scale, launchX, launchDelay = 0) {
-  spawnFirework(x, y, scale, launchX, launchDelay, EVENT_SHOW_FIREWORK_COLORS, EVENT_SHOW_FIREWORK_ACCENTS);
+function finishCelebrationIntro() {
+  if (!celebrationIntro.active) {
+    return;
+  }
+
+  celebrationIntro.active = false;
+  setCelebrationIntroVisualState(true, false, true);
+
+  const cx = width * 0.5;
+  const cy = height * 0.43;
+  lastCelebrationBlastX = cx;
+  lastCelebrationBlastY = cy;
+  let latestExplosionAt = performance.now();
+  spawnBurst(cx, cy, random(560, 760), 1.75);
+  const blastCount = 6 + Math.floor(random(0, 3));
+  for (let i = 0; i < blastCount; i++) {
+    const shell = spawnEventFirework(
+      cx + random(-42, 42),
+      cy + random(-32, 26),
+      random(1.55, 2.25),
+      cx + random(-width * 0.18, width * 0.18),
+      i * 0.03,
+      INTRO_FIREWORK_LIGHT_BOOST
+    );
+    if (shell && Number.isFinite(shell.expectedExplodeAt)) {
+      latestExplosionAt = Math.max(latestExplosionAt, shell.expectedExplodeAt);
+    }
+  }
+
+  celebrationIntro.pendingStartAt = latestExplosionAt + CELEBRATION_POST_BLAST_DELAY_MS;
+}
+
+function updateCelebrationPendingStart(nowMs) {
+  if (celebrationModeEnabled || celebrationIntro.pendingStartAt <= 0) {
+    return;
+  }
+  if (nowMs < celebrationIntro.pendingStartAt) {
+    return;
+  }
+  triggerCelebrationStartFromIntro();
+}
+
+function updateCelebrationIntro(nowMs) {
+  if (!celebrationIntro.active) {
+    return;
+  }
+  if (!celebrationIntroDuck || !celebrationIntroRabbit) {
+    finishCelebrationIntro();
+    return;
+  }
+
+  const t = clamp01((nowMs - celebrationIntro.startAt) / celebrationIntro.duration);
+  const eased = easeInOutCubic(t);
+  const angle = eased * Math.PI * 2 * CELEBRATION_INTRO_SPINS;
+  const targetCenterX = width * 0.5;
+  const targetCenterY = height * 0.43;
+  const centerX = lerp(celebrationIntro.originCenterX, targetCenterX, eased);
+  const centerY = lerp(celebrationIntro.originCenterY, targetCenterY, eased) - Math.sin(eased * Math.PI) * (height * 0.058);
+  const duckBaseX = lerp(celebrationIntro.duckStartX, centerX, eased);
+  const rabbitBaseX = lerp(celebrationIntro.rabbitStartX, centerX, eased);
+  const weavePhase = Math.sin(angle);
+  const weaveAmp = Math.sin(eased * Math.PI) * lerp(celebrationIntro.startRadius * 0.45, celebrationIntro.startRadius * 1.1, 1 - eased);
+  const twistY = Math.cos(angle * 1.12) * (5 * (1 - eased * 0.45));
+  const sharedY = lerp((celebrationIntro.duckStartY + celebrationIntro.rabbitStartY) * 0.5, centerY, eased);
+  const duckX = duckBaseX + weavePhase * weaveAmp;
+  const rabbitX = rabbitBaseX - weavePhase * weaveAmp;
+  const duckY = sharedY - twistY;
+  const rabbitY = sharedY + twistY;
+  const depth = Math.cos(angle);
+  const baseScale = 0.92 + eased * 0.33;
+  const duckScale = baseScale * (0.95 + depth * 0.08);
+  const rabbitScale = baseScale * (0.95 - depth * 0.08);
+  const tilt = weavePhase * 0.24;
+  const iconOpacity = 0.58 + eased * 0.42;
+
+  celebrationIntroDuck.style.left = `${duckX}px`;
+  celebrationIntroDuck.style.top = `${duckY}px`;
+  celebrationIntroDuck.style.opacity = `${iconOpacity}`;
+  celebrationIntroDuck.style.transform = `translate(-50%, -50%) scale(${duckScale}) rotate(${tilt}rad)`;
+
+  celebrationIntroRabbit.style.left = `${rabbitX}px`;
+  celebrationIntroRabbit.style.top = `${rabbitY}px`;
+  celebrationIntroRabbit.style.opacity = `${iconOpacity}`;
+  celebrationIntroRabbit.style.transform = `translate(-50%, -50%) scale(${rabbitScale}) rotate(${-tilt}rad)`;
+
+  if (t >= 1) {
+    finishCelebrationIntro();
+  }
+}
+
+function startCelebrationIntro() {
+  if (celebrationIntro.active || celebrationIntro.pendingStartAt > 0 || celebrationModeEnabled) {
+    return;
+  }
+
+  const fallbackDuckX = width * 0.43;
+  const fallbackRabbitX = width * 0.57;
+  const fallbackY = height - 34;
+  const duckCenter = getElementCenter(bottomDuckIcon, fallbackDuckX, fallbackY);
+  const rabbitCenter = getElementCenter(bottomRabbitIcon, fallbackRabbitX, fallbackY);
+
+  celebrationIntro.duckStartX = duckCenter.x;
+  celebrationIntro.duckStartY = duckCenter.y;
+  celebrationIntro.rabbitStartX = rabbitCenter.x;
+  celebrationIntro.rabbitStartY = rabbitCenter.y;
+  celebrationIntro.originCenterX = (duckCenter.x + rabbitCenter.x) * 0.5;
+  celebrationIntro.originCenterY = (duckCenter.y + rabbitCenter.y) * 0.5;
+  celebrationIntro.startRadius = Math.max(26, Math.abs(rabbitCenter.x - duckCenter.x) * 0.5);
+  celebrationIntro.startAt = performance.now();
+  celebrationIntro.duration = CELEBRATION_INTRO_DURATION_MS;
+  celebrationIntro.pendingStartAt = 0;
+  celebrationIntro.active = true;
+
+  syncCelebrationIntroIcons();
+  setCelebrationIntroVisible(true);
+  updateCelebrationIntro(celebrationIntro.startAt);
+}
+
+function triggerMidnightShow() {
+  startCelebrationIntro();
+}
+
+function spawnEventFirework(x, y, scale, launchX, launchDelay = 0, lightBoost = 1) {
+  return spawnFirework(
+    x,
+    y,
+    scale,
+    launchX,
+    launchDelay,
+    EVENT_SHOW_FIREWORK_COLORS,
+    EVENT_SHOW_FIREWORK_ACCENTS,
+    lightBoost
+  );
 }
 
 function spawnCelebrationSweep(direction) {
@@ -864,6 +1224,10 @@ function setEventLoveSidesVisible(visible) {
 
 function hideNewYearMessage() {
   newYearMessageUntil = 0;
+  if (eventLoveSidesShowTimer) {
+    clearTimeout(eventLoveSidesShowTimer);
+    eventLoveSidesShowTimer = 0;
+  }
   if (newYearMessage) {
     newYearMessage.classList.remove("visible");
   }
@@ -874,9 +1238,31 @@ function showNewYearMessage(durationMs) {
   if (!newYearMessage) {
     return;
   }
+  const originX = Number.isFinite(lastCelebrationBlastX) && lastCelebrationBlastX > 0 ? lastCelebrationBlastX : width * 0.5;
+  const originY = Number.isFinite(lastCelebrationBlastY) && lastCelebrationBlastY > 0 ? lastCelebrationBlastY : height * 0.43;
   newYearMessageUntil = performance.now() + Math.max(1000, durationMs || NEW_YEAR_MESSAGE_DURATION_MS);
+  newYearMessage.style.setProperty("--msg-origin-x", `${originX}px`);
+  newYearMessage.style.setProperty("--msg-origin-y", `${originY}px`);
+  newYearMessage.classList.remove("visible");
+  if (eventLoveSides) {
+    eventLoveSides.classList.remove("visible");
+  }
+  if (eventLoveSidesShowTimer) {
+    clearTimeout(eventLoveSidesShowTimer);
+    eventLoveSidesShowTimer = 0;
+  }
+  void newYearMessage.offsetWidth;
   newYearMessage.classList.add("visible");
-  setEventLoveSidesVisible(true);
+  if (eventLoveSides) {
+    eventLoveSidesShowTimer = setTimeout(() => {
+      eventLoveSidesShowTimer = 0;
+      if (newYearMessageUntil > performance.now() && newYearMessage.classList.contains("visible")) {
+        setEventLoveSidesVisible(true);
+      }
+    }, EVENT_LOVE_SIDES_SHOW_DELAY_MS);
+  } else {
+    setEventLoveSidesVisible(true);
+  }
 }
 
 function updateNewYearMessageVisibility(nowMs) {
@@ -887,6 +1273,7 @@ function updateNewYearMessageVisibility(nowMs) {
 
 function setCelebrationMode(enabled) {
   if (!enabled) {
+    cancelCelebrationIntro();
     celebrationModeEnabled = false;
     celebrationUntil = 0;
     celebrationNextSweepAt = 0;
@@ -897,7 +1284,9 @@ function setCelebrationMode(enabled) {
     hideNewYearMessage();
     return;
   }
-  celebrationModeEnabled = true;
+  if (celebrationModeEnabled || celebrationIntro.active || celebrationIntro.pendingStartAt > 0) {
+    return;
+  }
   triggerMidnightShow();
 }
 
@@ -914,7 +1303,7 @@ function isTypingTarget(target) {
 
 function setupPetals() {
   petals.length = 0;
-  const count = Math.min(MAX_PETALS, Math.max(140, Math.floor(width * 0.16)));
+  const count = Math.min(MAX_PETALS, Math.max(62, Math.floor(width * 0.078)));
   for (let i = 0; i < count; i++) {
     spawnPetal();
   }
@@ -1034,7 +1423,7 @@ function drawSideVignette(eventBoost = 0) {
   }
 }
 
-function drawPetal(p) {
+function drawPetal(p, timeSec) {
   ctx.save();
   ctx.translate(p.x, p.y);
   ctx.rotate(p.rot);
@@ -1042,6 +1431,21 @@ function drawPetal(p) {
   const fadeRange = Math.max(120, height * 0.3);
   const fadeBottom = Math.max(0, Math.min(1, (height - p.y) / fadeRange));
   const finalAlpha = p.alpha * (p.y > fadeStartY ? fadeBottom : 1);
+  const pulse = 0.58 + 0.42 * Math.sin(timeSec * p.glowPulse + p.glowSeed + p.sway * 0.7);
+
+  if (p.glow) {
+    ctx.globalAlpha = Math.max(0, finalAlpha * (0.28 + pulse * 0.36));
+    const glowR = p.size * (1.8 + pulse * 0.95);
+    const halo = ctx.createRadialGradient(0, 0, 0, 0, 0, glowR);
+    halo.addColorStop(0, "rgba(238,255,241,0.96)");
+    halo.addColorStop(0.34, "rgba(132,255,164,0.62)");
+    halo.addColorStop(1, "rgba(88,232,126,0)");
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(0, 0, glowR, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   ctx.globalAlpha = finalAlpha;
   const sprite = PETAL_SPRITES[p.sprite];
   if (sprite && sprite.complete && sprite.naturalWidth > 0) {
@@ -1099,17 +1503,25 @@ function drawBranchOverlay() {
 function drawFireworks() {
   for (let i = 0; i < fireworks.length; i++) {
     const f = fireworks[i];
-    const halo = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, 18 * f.scale);
-    halo.addColorStop(0, "rgba(255,255,255,0.42)");
+    const lightBoost = Math.max(0.6, Number.isFinite(f.lightBoost) ? f.lightBoost : 1);
+    const haloRadius = 18 * f.scale * (0.88 + lightBoost * 0.38);
+    const halo = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, haloRadius);
+    halo.addColorStop(0, `rgba(255,255,255,${Math.min(0.94, 0.32 + lightBoost * 0.22)})`);
+    halo.addColorStop(0.26, rgbaFromHex(f.color, Math.min(0.5, 0.18 + lightBoost * 0.12)));
     halo.addColorStop(1, "rgba(255,255,255,0)");
     ctx.fillStyle = halo;
     ctx.beginPath();
-    ctx.arc(f.x, f.y, 18 * f.scale, 0, Math.PI * 2);
+    ctx.arc(f.x, f.y, haloRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = `rgba(255,255,255,${Math.min(0.98, 0.35 + lightBoost * 0.18)})`;
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, 4.4 * f.scale * (0.78 + lightBoost * 0.26), 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = f.color;
     ctx.beginPath();
-    ctx.arc(f.x, f.y, 2.6 * f.scale, 0, Math.PI * 2);
+    ctx.arc(f.x, f.y, 2.6 * f.scale * (0.95 + lightBoost * 0.12), 0, Math.PI * 2);
     ctx.fill();
   }
   for (let i = 0; i < sparks.length; i++) {
@@ -1141,12 +1553,13 @@ function drawExplosionLighting() {
 
   for (let i = 0; i < explosionFlashes.length; i++) {
     const e = explosionFlashes[i];
+    const lightBoost = Math.max(0.6, Number.isFinite(e.lightBoost) ? e.lightBoost : 1);
     const t = Math.max(0, Math.min(1, e.age / e.life));
     const fade = Math.pow(1 - t, 0.72);
-    const radius = e.radius * (0.86 + t * 0.4);
-    const coreA = Math.max(0, Math.min(1, 0.3 * fade * e.intensity));
-    const midA = Math.max(0, Math.min(1, 0.19 * fade * e.intensity));
-    const rimA = Math.max(0, Math.min(1, 0.08 * fade * e.intensity));
+    const radius = e.radius * (0.86 + t * 0.4) * (0.92 + lightBoost * 0.1);
+    const coreA = Math.max(0, Math.min(1, 0.3 * fade * e.intensity * (0.9 + lightBoost * 0.24)));
+    const midA = Math.max(0, Math.min(1, 0.19 * fade * e.intensity * (0.9 + lightBoost * 0.2)));
+    const rimA = Math.max(0, Math.min(1, 0.08 * fade * e.intensity * (0.88 + lightBoost * 0.16)));
 
     const glow = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, radius);
     glow.addColorStop(0, `rgba(255,255,255,${coreA})`);
@@ -1156,6 +1569,53 @@ function drawExplosionLighting() {
     ctx.fillStyle = glow;
     ctx.beginPath();
     ctx.arc(e.x, e.y, radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+function drawFireworkForegroundGlow(intensity = 1) {
+  if (intensity <= 0 || (fireworks.length <= 0 && sparks.length <= 0)) {
+    return;
+  }
+
+  const gain = Math.max(0.2, intensity);
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+
+  for (let i = 0; i < fireworks.length; i++) {
+    const f = fireworks[i];
+    if (f.delay > 0) {
+      continue;
+    }
+    const lightBoost = Math.max(0.6, Number.isFinite(f.lightBoost) ? f.lightBoost : 1) * gain;
+    const radius = 24 * f.scale * (0.9 + lightBoost * 0.48);
+    const glow = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, radius);
+    glow.addColorStop(0, `rgba(255,255,255,${Math.min(0.98, 0.44 + lightBoost * 0.2)})`);
+    glow.addColorStop(0.26, rgbaFromHex(f.color, Math.min(0.58, 0.2 + lightBoost * 0.14)));
+    glow.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const sparkStep = gain > 1 ? 1 : 2;
+  for (let i = 0; i < sparks.length; i += sparkStep) {
+    const s = sparks[i];
+    const lifeT = Math.max(0, 1 - s.age / s.life);
+    if (lifeT <= 0) {
+      continue;
+    }
+    const alpha = Math.min(0.5, 0.12 + lifeT * 0.36 * gain);
+    const radius = s.size * (2.9 + gain * 1.8);
+    const glow = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, radius);
+    glow.addColorStop(0, rgbaFromHex(s.color, alpha));
+    glow.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
     ctx.fill();
   }
 
@@ -1179,25 +1639,28 @@ function updateFireworks(dt, nowMs) {
     hideNewYearMessage();
   }
 
+  const introActive = celebrationIntro.active || celebrationIntro.pendingStartAt > 0;
   const eventActive = celebrationModeEnabled && nowMs < celebrationUntil;
 
-  if (eventActive) {
-    if (nowMs >= celebrationNextSweepAt) {
-      spawnCelebrationPattern(celebrationSweepDirection);
-      celebrationSweepDirection *= -1;
-      celebrationNextSweepAt = nowMs + CELEBRATION_SWEEP_INTERVAL_MS;
-    }
-  } else if (secondsToTet <= 10) {
-    fireworksCooldown -= dt * 2.1;
-    if (fireworksCooldown <= 0) {
-      spawnFirework(random(width * 0.12, width * 0.88), random(height * 0.12, height * 0.42), random(1.3, 2.1));
-      fireworksCooldown = random(0.25, 0.6);
-    }
-  } else {
-    fireworksCooldown -= dt;
-    if (fireworksCooldown <= 0) {
-      spawnFirework(random(width * 0.12, width * 0.88), random(height * 0.12, height * 0.42), random(0.9, 1.4));
-      fireworksCooldown = random(1.0, 2.2);
+  if (!introActive) {
+    if (eventActive) {
+      if (nowMs >= celebrationNextSweepAt) {
+        spawnCelebrationPattern(celebrationSweepDirection);
+        celebrationSweepDirection *= -1;
+        celebrationNextSweepAt = nowMs + CELEBRATION_SWEEP_INTERVAL_MS;
+      }
+    } else if (secondsToTet <= 10) {
+      fireworksCooldown -= dt * 2.1;
+      if (fireworksCooldown <= 0) {
+        spawnFirework(random(width * 0.12, width * 0.88), random(height * 0.12, height * 0.42), random(1.3, 2.1));
+        fireworksCooldown = random(0.25, 0.6);
+      }
+    } else {
+      fireworksCooldown -= dt;
+      if (fireworksCooldown <= 0) {
+        spawnFirework(random(width * 0.12, width * 0.88), random(height * 0.12, height * 0.42), random(0.9, 1.4));
+        fireworksCooldown = random(1.0, 2.2);
+      }
     }
   }
 
@@ -1323,13 +1786,11 @@ function updatePetals(dt, timeSec) {
       p.alpha = random(0.72, 0.95);
       p.color = Math.random() > 0.5 ? "#ffd9ea" : "#ffc4dc";
       p.sprite = Math.random() > 0.5 ? 0 : 1;
+      p.glow = Math.random() < GLOW_PETAL_RATE;
+      p.glowPulse = random(0.8, 1.45);
+      p.glowSeed = random(0, Math.PI * 2);
     }
   }
-}
-
-function showLoveMessage(x, y) {
-  const text = LOVE_TEXTS[Math.floor(random(0, LOVE_TEXTS.length))];
-  showFloatingText(text, x, y, 2200);
 }
 
 function findPetalAt(x, y) {
@@ -1527,6 +1988,9 @@ function updateLunarCountdown() {
 function frame(now) {
   const dt = Math.min(0.033, (now - lastTime) / 1000 || 0.016);
   const timeSec = now * 0.001;
+  updateCelebrationIntro(now);
+  updateCelebrationPendingStart(now);
+  const introActive = celebrationIntro.active || celebrationIntro.pendingStartAt > 0;
   const eventActive = celebrationModeEnabled && now < celebrationUntil;
   lastTime = now;
   hudTimer += dt;
@@ -1540,11 +2004,12 @@ function frame(now) {
   updateRabbitHideSeek(now);
   drawBackground(timeSec);
   for (let i = 0; i < petals.length; i++) {
-    drawPetal(petals[i]);
+    drawPetal(petals[i], timeSec);
   }
   drawFireworks();
   drawBranchOverlay();
-  drawSideVignette(eventActive ? 1 : 0);
+  drawSideVignette(eventActive ? 1 : introActive ? INTRO_SIDE_SHADE_BOOST : 0);
+  drawFireworkForegroundGlow(introActive ? 0.9 : eventActive ? 0.24 : 0);
   drawExplosionLighting();
   drawCritters(timeSec);
 
@@ -1562,6 +2027,9 @@ function handleTap(x, y) {
       randomizeBgmTrack(false, false);
     }
     playBgm();
+  }
+  if (celebrationIntro.active || celebrationIntro.pendingStartAt > 0) {
+    return;
   }
 
   const critterHit = findCritterAt(x, y);
@@ -1582,8 +2050,13 @@ function handleTap(x, y) {
   } else {
     const hitIndex = findPetalAt(x, y);
     if (hitIndex >= 0) {
+      const hitPetal = petals[hitIndex];
       petals.splice(hitIndex, 1);
-      showLoveMessage(x, y);
+      if (hitPetal && hitPetal.glow) {
+        showMelonDrop(x, y);
+      } else {
+        showLoveMessage(x, y);
+      }
     }
   }
 
@@ -1636,13 +2109,15 @@ window.addEventListener("keydown", (event) => {
     return;
   }
   if (event.code === "Minus" || event.code === "NumpadSubtract" || event.key === "-") {
-    setCelebrationMode(!celebrationModeEnabled);
+    const isRunning = celebrationModeEnabled || celebrationIntro.active || celebrationIntro.pendingStartAt > 0;
+    setCelebrationMode(!isRunning);
   }
 });
 
 window.addEventListener("resize", resize);
 
 initNewYearMessage();
+syncCelebrationIntroIcons();
 resize();
 updateLunarCountdown();
 requestAnimationFrame(frame);

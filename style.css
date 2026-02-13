@@ -79,6 +79,155 @@ body {
   font-size: 36px;
   line-height: 1;
   filter: drop-shadow(0 6px 10px rgba(65, 35, 60, 0.28));
+  transition: opacity 0.24s ease;
+}
+
+.bottom-bar.intro-flight .side-icon {
+  opacity: 0;
+}
+
+.celebration-intro-dim {
+  position: fixed;
+  inset: 0;
+  z-index: 16;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(circle at 50% 54%, rgba(82, 53, 109, 0.18), rgba(7, 4, 16, 0.72) 72%),
+    linear-gradient(180deg, rgba(10, 7, 20, 0.24), rgba(4, 2, 10, 0.62));
+  transition: opacity 0.42s ease;
+}
+
+.celebration-intro-dim.visible {
+  opacity: 1;
+}
+
+.celebration-intro-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 22;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s linear;
+}
+
+.celebration-intro-layer.visible {
+  opacity: 1;
+}
+
+.firework-light-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 17;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.firework-overlay-flash {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--flash-size, 180px);
+  height: var(--flash-size, 180px);
+  transform: translate(-50%, -50%) scale(0.38);
+  border-radius: 50%;
+  opacity: 0;
+  filter: blur(var(--flash-blur, 0px));
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+  animation: fireworkOverlayFlash var(--flash-duration, 920ms) ease-out forwards;
+}
+
+@keyframes fireworkOverlayFlash {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.38);
+  }
+  24% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.92);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.52);
+  }
+}
+
+.celebration-intro-icon {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  font-size: 56px;
+  line-height: 1;
+  filter:
+    drop-shadow(0 0 10px rgba(255, 255, 255, 0.4))
+    drop-shadow(0 10px 18px rgba(27, 14, 45, 0.46));
+  will-change: transform, left, top, opacity;
+  isolation: isolate;
+}
+
+.celebration-intro-icon::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 116px;
+  height: 116px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.76;
+  filter: blur(2px);
+}
+
+.celebration-intro-layer.visible .celebration-intro-icon::before {
+  animation: introIconAuraPulse 1.12s ease-in-out infinite;
+}
+
+.celebration-intro-icon.duck {
+  text-shadow:
+    0 0 12px rgba(255, 255, 255, 0.5),
+    0 0 30px rgba(255, 206, 118, 0.78),
+    0 0 48px rgba(255, 158, 82, 0.68);
+}
+
+.celebration-intro-icon.duck::before {
+  background: radial-gradient(
+    circle,
+    rgba(255, 247, 215, 0.88) 0%,
+    rgba(255, 191, 116, 0.48) 38%,
+    rgba(255, 142, 84, 0.24) 62%,
+    rgba(255, 142, 84, 0) 100%
+  );
+}
+
+.celebration-intro-icon.rabbit {
+  text-shadow:
+    0 0 12px rgba(255, 255, 255, 0.52),
+    0 0 30px rgba(255, 184, 230, 0.82),
+    0 0 48px rgba(255, 129, 208, 0.72);
+}
+
+.celebration-intro-icon.rabbit::before {
+  background: radial-gradient(
+    circle,
+    rgba(255, 242, 252, 0.92) 0%,
+    rgba(255, 181, 229, 0.52) 38%,
+    rgba(255, 120, 202, 0.26) 62%,
+    rgba(255, 120, 202, 0) 100%
+  );
+}
+
+@keyframes introIconAuraPulse {
+  0%,
+  100% {
+    opacity: 0.66;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .event-love-sides {
@@ -87,7 +236,7 @@ body {
   z-index: 17;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.35s ease;
+  transition: opacity 0.28s ease;
 }
 
 .event-love-sides.visible {
@@ -100,19 +249,70 @@ body {
   width: min(20vw, 220px);
   height: auto;
   filter: drop-shadow(0 16px 28px rgba(15, 7, 22, 0.36));
+  opacity: 0;
+  will-change: transform, opacity;
 }
 
 .event-love-left {
   left: clamp(10px, 3.8vw, 72px);
   transform: translateY(-50%);
-  animation: loveSidesFloatLeft 2.6s ease-in-out infinite;
 }
 
 .event-love-right {
   right: clamp(10px, 3.8vw, 72px);
   transform: translateY(-50%) scaleX(-1);
-  animation: loveSidesFloatRight 2.6s ease-in-out infinite;
-  animation-delay: 0.7s;
+}
+
+.event-love-sides.visible .event-love-left {
+  opacity: 1;
+  animation:
+    loveSideDropLeft 1.35s cubic-bezier(0.16, 0.86, 0.25, 1.06) both,
+    loveSidesFloatLeft 2.9s ease-in-out 1.35s infinite;
+}
+
+.event-love-sides.visible .event-love-right {
+  opacity: 1;
+  animation:
+    loveSideDropRight 1.35s cubic-bezier(0.16, 0.86, 0.25, 1.06) both,
+    loveSidesFloatRight 2.9s ease-in-out 1.43s infinite;
+}
+
+@keyframes loveSideDropLeft {
+  0% {
+    opacity: 0;
+    transform: translateY(calc(-50% - 64vh)) rotate(-12deg) scale(0.82);
+  }
+  62% {
+    opacity: 1;
+    transform: translateY(calc(-50% + 12px)) rotate(8deg) scale(1.03);
+  }
+  82% {
+    opacity: 1;
+    transform: translateY(calc(-50% - 5px)) rotate(-3deg) scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-50%) rotate(0deg) scale(1);
+  }
+}
+
+@keyframes loveSideDropRight {
+  0% {
+    opacity: 0;
+    transform: translateY(calc(-50% - 64vh)) scaleX(-1) rotate(-12deg) scale(0.82);
+  }
+  62% {
+    opacity: 1;
+    transform: translateY(calc(-50% + 12px)) scaleX(-1) rotate(8deg) scale(1.03);
+  }
+  82% {
+    opacity: 1;
+    transform: translateY(calc(-50% - 5px)) scaleX(-1) rotate(-3deg) scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-50%) scaleX(-1) rotate(0deg) scale(1);
+  }
 }
 
 @keyframes loveSidesFloatLeft {
@@ -163,18 +363,46 @@ body {
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
-  transform: translate(-50%, -42%) scale(0.985);
+  --msg-origin-x: 50vw;
+  --msg-origin-y: 50vh;
+  transform: translate(-50%, -50%) scale(1);
+  filter: blur(0);
+  will-change: transform, opacity;
   transition:
-    opacity 0.45s ease,
-    transform 0.55s cubic-bezier(0.2, 0.72, 0.2, 1),
-    visibility 0s linear 0.5s;
+    opacity 0.5s ease,
+    transform 0.65s cubic-bezier(0.2, 0.72, 0.2, 1),
+    visibility 0s linear 0.56s;
 }
 
 .new-year-message.visible {
   opacity: 1;
   visibility: visible;
   transform: translate(-50%, -50%) scale(1);
+  animation: newYearMessageFromHole 1.2s cubic-bezier(0.17, 0.82, 0.22, 1) both;
   transition-delay: 0s;
+}
+
+@keyframes newYearMessageFromHole {
+  0% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--msg-origin-x) - 50vw), calc(-50% + var(--msg-origin-y) - 50vh)) scale(0.06) rotate(-22deg);
+    filter: blur(10px) brightness(0.62) saturate(1.5);
+  }
+  30% {
+    opacity: 0.92;
+    transform: translate(calc(-50% + var(--msg-origin-x) - 50vw), calc(-50% + var(--msg-origin-y) - 50vh)) scale(0.18) rotate(-14deg);
+    filter: blur(6px) brightness(0.68) saturate(1.35);
+  }
+  74% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.04) rotate(1.4deg);
+    filter: blur(0.8px) brightness(1.05) saturate(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    filter: blur(0) brightness(1) saturate(1);
+  }
 }
 
 .new-year-message p {
@@ -230,6 +458,21 @@ body {
   inset: 0;
   pointer-events: none;
   z-index: 12;
+}
+
+.petal-gift-drop {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate3d(-50%, -50%, 0);
+  transform-origin: center;
+  opacity: 1;
+  will-change: transform, top;
+  filter:
+    drop-shadow(0 0 14px rgba(197, 255, 205, 0.82))
+    drop-shadow(0 0 30px rgba(76, 230, 113, 0.62))
+    drop-shadow(0 12px 22px rgba(26, 48, 30, 0.34));
+  backface-visibility: hidden;
 }
 
 .petal-message {
@@ -300,6 +543,10 @@ body {
 
   .side-icon {
     font-size: 28px;
+  }
+
+  .celebration-intro-icon {
+    font-size: 48px;
   }
 
   .event-love-side {
