@@ -120,12 +120,12 @@ const RABBIT_SEEK_TARGET_HITS = 5;
 const RABBIT_SEEK_DURATION_MS = 10 * 1000;
 const RABBIT_REWARD_DURATION_MS = 4200;
 const NEW_YEAR_TEXT_LINES = [
-  "Anh không giỏi nói điều ngọt ngào nhưng tình iu của anh luôn là thật.",
-  "Chúc bé iu của anh năm mới thật nhiều niềm vui, luôn xinh đẹp, khỏe mạnh và cười nhiều hơn mỗi ngày 💕🌸",
-  "Năm mới thì ngoan ngoãn hơn một chút, bớt giận dỗi vô lý lại (mà nếu có giận thì cũng phải giận chơi chơi thui 😌) 💕🌸",
-  "Chúc bé luôn gặp điều may mắn, làm gì cũng thuận lợi, và luôn luôn có anh ở bên cạnh để thương, để chiều, để dỗ dành 💕🌸",
-  "Năm nay mình yêu nhau nhiều hơn năm cũ nha 💕🌸",
-  "Chúc mừng năm mới bé iu 🎆❤️💕🌸",
+  "QW5oIGtow7RuZyBnaeG7j2kgbsOzaSDEkWnhu4F1IG5n4buNdCBuZ8OgbyBuaMawbmcgdMOsbmggaXUgY+G7p2EgYW5oIGx1w7RuIGzDoCB0aOG6rXQu",
+  "Q2jDumMgYsOpIGl1IGPhu6dhIGFuaCBuxINtIG3hu5tpIHRo4bqtdCBuaGnhu4F1IG5p4buBbSB2dWksIGx1w7RuIHhpbmggxJHhurlwLCBraOG7j2UgbeG6oW5oIHbDoCBjxrDhu51pIG5oaeG7gXUgaMahbiBt4buXaSBuZ8OgeSDwn5KV8J+MuA==",
+  "TsSDbSBt4bubaSB0aMOsIG5nb2FuIG5nb8OjbiBoxqFuIG3hu5l0IGNow7p0LCBi4bubdCBnaeG6rW4gZOG7l2kgdsO0IGzDvSBs4bqhaSAobcOgIG7hur91IGPDsyBnaeG6rW4gdGjDrCBjxaluZyBwaOG6o2kgZ2nhuq1uIGNoxqFpIGNoxqFpIHRodWkg8J+YjCkg8J+SlfCfjLg=",
+  "Q2jDumMgYsOpIGx1w7RuIGfhurdwIMSRaeG7gXUgbWF5IG3huq9uLCBsw6BtIGfDrCBjxaluZyB0aHXhuq1uIGzhu6NpLCB2w6AgbHXDtG4gbHXDtG4gY8OzIGFuaCDhu58gYsOqbiBj4bqhbmggxJHhu4MgdGjGsMahbmcsIMSR4buDIGNoaeG7gXUsIMSR4buDIGThu5cgZMOgbmgg8J+SlfCfjLg=",
+  "TsSDbSBuYXkgbcOsbmggecOqdSBuaGF1IG5oaeG7gXUgaMahbiBuxINtIGPFqSBuaGEg8J+SlfCfjLg=",
+  "Q2jDumMgbeG7q25nIG7Eg20gbeG7m2kgYsOpIGl1IPCfjobinaTvuI/wn5KV8J+MuA==",
 ];
 const LOVE_TEXTS = [
   "Chồng yêu bé",
@@ -245,6 +245,29 @@ function getElementCenter(element, fallbackX, fallbackY) {
     x: rect.left + rect.width * 0.5,
     y: rect.top + rect.height * 0.5,
   };
+}
+
+function decodeBase64Utf8(value) {
+  if (typeof value !== "string" || value.length <= 0) {
+    return "";
+  }
+  try {
+    const binary = atob(value);
+    if (typeof TextDecoder !== "undefined") {
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return new TextDecoder("utf-8").decode(bytes);
+    }
+    let escaped = "";
+    for (let i = 0; i < binary.length; i++) {
+      escaped += `%${binary.charCodeAt(i).toString(16).padStart(2, "0")}`;
+    }
+    return decodeURIComponent(escaped);
+  } catch {
+    return "";
+  }
 }
 
 function spawnFireworkOverlayFlash(x, y, color, radiusPx, durationMs, intensity = 1) {
@@ -1209,8 +1232,12 @@ function initNewYearMessage() {
   }
   newYearMessage.innerHTML = "";
   for (let i = 0; i < NEW_YEAR_TEXT_LINES.length; i++) {
+    const decoded = decodeBase64Utf8(NEW_YEAR_TEXT_LINES[i]);
+    if (!decoded) {
+      continue;
+    }
     const p = document.createElement("p");
-    p.textContent = NEW_YEAR_TEXT_LINES[i];
+    p.textContent = decoded;
     newYearMessage.appendChild(p);
   }
 }
